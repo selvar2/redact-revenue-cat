@@ -34,32 +34,36 @@
       "name": "Design system (tokens, glass surfaces, motion)",
       "phase": 1,
       "owner": "design-system",
-      "status": "not_started",
-      "acceptance": "No hardcoded colour/font/spacing anywhere; token gallery renders; light-independent dark palette matches DEC-002"
+      "status": "built",
+      "acceptance": "No hardcoded colour/font/spacing anywhere; token gallery renders; light-independent dark palette matches DEC-002",
+      "notes": "Verifier 2026-08-17: system itself is strong (ScaledMetric typography, Motion enum, a11y labels). RootView hardcoded fonts/magic numbers and preview-only gallery fixed by the fixer this session; NOT re-verified, so status stays built."
     },
     {
       "id": "F03",
       "name": "PII detection engine",
       "phase": 1,
       "owner": "detect-engine",
-      "status": "not_started",
-      "acceptance": "Detects PAN, Aadhaar, IFSC, card, email, phone, GSTIN, and NL person/place/org names with bounding boxes; unit tests over a fixture corpus pass"
+      "status": "verified",
+      "acceptance": "Detects PAN, Aadhaar, IFSC, card, email, phone, GSTIN, and NL person/place/org names with bounding boxes; unit tests over a fixture corpus pass",
+      "notes": "Verifier 2026-08-17: checksums independently confirmed against published algorithms; false-positive coverage real. Known honest gap: FoundationModelClassifier delegates 100% to HeuristicClassifier on iOS 26 \u2014 see docs/memory/gotchas/foundation-models-api-unconfirmed.md."
     },
     {
       "id": "F04",
       "name": "Irreversible redaction core",
       "phase": 1,
       "owner": "redaction-core",
-      "status": "not_started",
-      "acceptance": "Test OCRs our own exported output and asserts the secret string is UNRECOVERABLE; EXIF/GPS/PDF metadata stripped"
+      "status": "built",
+      "acceptance": "Test OCRs our own exported output and asserts the secret string is UNRECOVERABLE; EXIF/GPS/PDF metadata stripped",
+      "notes": "Verifier 2026-08-17: engine PASSES on substance (no compositing, rasterises, adversarial OCR test with three controls). Blocked only by two metadata assertions that asserted on ImageIO container names; fixer narrowed them to key level and the suite is now green (79 tests, 0 failures). Awaits an independent verifier pass."
     },
     {
       "id": "F05",
       "name": "SwiftData persistence (local only)",
       "phase": 1,
       "owner": "persistence",
-      "status": "not_started",
-      "acceptance": "Documents persist across launch; no iCloud, no network; delete removes all derived files"
+      "status": "built",
+      "acceptance": "Documents persist across launch; no iCloud, no network; delete removes all derived files",
+      "notes": "Verifier 2026-08-17: had zero tests. Fixer added Tests/PersistenceTests/DocumentStoreTests.swift (round-trip, on-disk relaunch, delete-removes-vault-files, orphan sweep, vault escape). Not independently verified."
     },
     {
       "id": "F06",
@@ -144,9 +148,10 @@
   ],
   "milestones": {
     "M1_registration": "complete",
-    "M2_revenuecat_project": "not_started",
+    "M2_revenuecat_project": "complete",
     "M3_test_purchase": "not_started",
     "M4_store_api_call": "not_started",
     "M5_real_purchase": "not_started"
-  }
+  },
+  "revenuecat_project_id": "51ce66cf"
 }

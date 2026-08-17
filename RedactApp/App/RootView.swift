@@ -10,6 +10,12 @@ struct RootView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var ambientDrift = false
+    /// The mark grows with the user's text size so it stays in proportion to the
+    /// wordmark beneath it at Larger Accessibility Sizes (CLAUDE.md rule 4).
+    @ScaledMetric(relativeTo: .largeTitle) private var markSize = Token.Size.mark
+    #if DEBUG
+    @State private var showingTokenGallery = false
+    #endif
 
     var body: some View {
         ZStack {
@@ -25,6 +31,27 @@ struct RootView: View {
             .padding(.horizontal, Token.Space.lg)
             .padding(.bottom, Token.Space.xl)
         }
+        #if DEBUG
+        // Debug-only entry to the token gallery, so the simulator run in verify.sh
+        // can actually reach it. F02's "token gallery renders" criterion is
+        // otherwise satisfied only in the Xcode canvas. Compiled out of Release,
+        // so it adds no user-visible surface (CLAUDE.md rule 10).
+        .overlay(alignment: .topTrailing) {
+            Button {
+                showingTokenGallery = true
+            } label: {
+                Image(systemName: "paintpalette.fill")
+                    .typeStyle(Typography.caption)
+                    .foregroundStyle(Token.Text.faint)
+                    .frame(width: Token.Size.minimumHitTarget, height: Token.Size.minimumHitTarget)
+            }
+            .accessibilityLabel("Open design token gallery")
+            .padding(.trailing, Token.Space.sm)
+        }
+        .sheet(isPresented: $showingTokenGallery) {
+            TokenGallery()
+        }
+        #endif
         .onAppear {
             // reduceMotion callers get a static background rather than a drift
             // loop — CLAUDE.md rule 4.
@@ -44,13 +71,13 @@ struct RootView: View {
             Token.BG.base
 
             RadialGradient(
-                colors: [Token.Accent.violet.opacity(0.22), .clear],
+                colors: [Token.Accent.violet.opacity(Token.Alpha.glowPrimary), .clear],
                 center: .init(x: 0.18, y: 0.22),
                 startRadius: 0,
                 endRadius: 420
             )
             RadialGradient(
-                colors: [Token.Accent.amber.opacity(0.18), .clear],
+                colors: [Token.Accent.amber.opacity(Token.Alpha.glowSecondary), .clear],
                 center: .init(x: 0.84, y: 0.78),
                 startRadius: 0,
                 endRadius: 400
@@ -67,27 +94,27 @@ struct RootView: View {
     private var mark: some View {
         RoundedRectangle(cornerRadius: Token.Radius.control, style: .continuous)
             .fill(Token.gradient)
-            .frame(width: 72, height: 72)
+            .frame(width: markSize, height: markSize)
             .overlay(
                 Image(systemName: "eye.slash.fill")
-                    .font(.system(size: 30, weight: .semibold))
+                    .typeStyle(Typography.markGlyph)
                     .foregroundStyle(.white)
             )
-            .shadow(color: Token.Accent.violet.opacity(0.5), radius: 28, y: 10)
+            .shadow(Token.Shadow.mark)
             .accessibilityHidden(true)
     }
 
     private var headline: some View {
         VStack(spacing: Token.Space.sm) {
             Text("Redact")
-                .font(.system(size: 44, weight: .bold, design: .rounded))
+                .typeStyle(Typography.displayXL)
                 .foregroundStyle(Token.Text.primary)
 
             Text("Find personal information in any document and remove it permanently.")
-                .font(.body)
+                .typeStyle(Typography.body)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Token.Text.muted)
-                .frame(maxWidth: 320)
+                .frame(maxWidth: Token.Layout.proseWidth)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Redact. Find personal information in any document and remove it permanently.")
@@ -98,9 +125,9 @@ struct RootView: View {
     private var privacyNote: some View {
         HStack(spacing: Token.Space.xs) {
             Image(systemName: "lock.fill")
-                .font(.caption2)
+                .typeStyle(Typography.caption)
             Text("Everything happens on this device")
-                .font(.footnote.weight(.medium))
+                .typeStyle(Typography.caption)
         }
         .foregroundStyle(Token.Text.faint)
         .padding(.horizontal, Token.Space.md)
@@ -109,7 +136,7 @@ struct RootView: View {
             Capsule().fill(.ultraThinMaterial)
         )
         .overlay(
-            Capsule().strokeBorder(Token.Line.hairline, lineWidth: 1)
+            Capsule().strokeBorder(Token.Line.hairline, lineWidth: Token.Size.hairlineWidth)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Everything happens on this device. Nothing is uploaded.")
