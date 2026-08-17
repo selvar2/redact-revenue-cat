@@ -75,9 +75,34 @@ public struct PatternDetector: Sendable {
         let validate: @Sendable (String) -> Bool
 
         static let all: [Rule] = [
-            .gstin, .aadhaar, .creditCard, .pan, .ifsc, .email, .indianPhone,
-            .internationalPhone, .dateOfBirth,
+            .gstin, .aadhaar, .creditCard, .pan, .ifsc, .bankAccount, .email,
+            .indianPhone, .internationalPhone, .dateOfBirth,
         ]
+
+        // Bank account numbers have no checkable structure: length varies by bank (9–18
+        // digits) and there is no checksum. A bare run of digits is therefore indistinguishable
+        // from an invoice total or an employee ID, so this rule refuses to fire without a
+        // label introducing it. That costs recall on unlabelled statements and buys the thing
+        // that matters more — a review screen the user still trusts by the tenth document.
+        //
+        // Only the number is redacted, not the label: covering the word "Bank A/C" tells the
+        // reader nothing and looks like a bug.
+        static let bankAccount = Rule(
+            kind: .bankAccount,
+            // Written on one line and WITHOUT .allowCommentsAndWhitespace: that option strips
+            // literal spaces from the pattern, including the one inside `[0-9 \-]` that lets
+            // a grouped number like "0004 1122 3344" match at all.
+            pattern: #"(?:bank\s*a/?c|a/?c|account)\s*(?:no\.?|number|#)?\s*[:\-–]?\s*([0-9][0-9 \-]{7,22}[0-9])"#,
+            options: [.caseInsensitive],
+            capturesPayloadAtGroup: 1,
+            confidence: 0.88,
+            validate: { candidate in
+                let digits = candidate.filter(\.isNumber)
+                // Indian account numbers run 9–18 digits. The upper bound also keeps this
+                // rule off card numbers, which `creditCard` claims first with a Luhn proof.
+                return (9...18).contains(digits.count)
+            }
+        )
 
         // 2-digit state code + PAN + entity number + 'Z' + check character.
         // Checked last-character-first because the checksum is what makes this trustworthy.

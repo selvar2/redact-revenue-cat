@@ -143,6 +143,11 @@ public enum Token {
         /// Edge length of the app mark (the gradient tile bearing the eye glyph).
         /// Scaled with `@ScaledMetric` at the point of use so it tracks Dynamic Type.
         public static let mark: CGFloat = 72
+        /// Width of a small page thumbnail shown beside a line or two of text — the
+        /// export screen's markup rows, and anywhere else a page needs to be
+        /// recognisable rather than readable. Scale it with `@ScaledMetric` at the
+        /// point of use, or it becomes a fixed stamp beside text that grows.
+        public static let thumbnailSmall: CGFloat = 72
     }
 
     public enum Layout {

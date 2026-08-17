@@ -16,6 +16,9 @@ public enum PIIKind: Hashable, Sendable, Codable {
     case pan
     case aadhaar
     case ifsc
+    /// A bank account number. Detected only when a label introduces it — see
+    /// ``PatternDetector`` — because the digits themselves have no checkable structure.
+    case bankAccount
     case gstin
     case creditCard
     case dateOfBirth
@@ -34,6 +37,7 @@ public enum PIIKind: Hashable, Sendable, Codable {
         case .pan:         return String(localized: "PAN", comment: "PII category: Indian Permanent Account Number")
         case .aadhaar:     return String(localized: "Aadhaar", comment: "PII category: Indian Aadhaar number")
         case .ifsc:        return String(localized: "IFSC Code", comment: "PII category: Indian bank branch code")
+        case .bankAccount: return String(localized: "Bank Account", comment: "PII category: a bank account number")
         case .gstin:       return String(localized: "GSTIN", comment: "PII category: Indian GST identification number")
         case .creditCard:  return String(localized: "Card Number", comment: "PII category: a payment card number")
         case .dateOfBirth: return String(localized: "Date of Birth", comment: "PII category: a birth date")
@@ -53,6 +57,7 @@ public enum PIIKind: Hashable, Sendable, Codable {
         case .pan:         return "person.text.rectangle.fill"
         case .aadhaar:     return "person.crop.rectangle.fill"
         case .ifsc:        return "building.columns.fill"
+        case .bankAccount: return "banknote.fill"
         case .gstin:       return "doc.text.fill"
         case .creditCard:  return "creditcard.fill"
         case .dateOfBirth: return "calendar"
@@ -104,16 +109,73 @@ public struct TextSpan: Hashable, Sendable, Codable {
     /// `.zero` means "no geometry" — a span that came from plain text rather than from OCR.
     public let boundingBox: CGRect
 
-    public init(text: String, utf16Range: Range<Int>, boundingBox: CGRect = .zero) {
+    /// Vision-space box for each **UTF-16 code unit** of ``text``, in the same order.
+    ///
+    /// Vision reports one box per recognised *line*, but `VNRecognizedText.boundingBox(for:)`
+    /// will report the real quad for any substring of that line. We ask it once per character at
+    /// recognition time and carry the answer here, because the alternative — splitting the line
+    /// box by character *count* — is wrong for every proportional typeface: a bar computed that
+    /// way drifts sideways and lands on the wrong glyphs, which for this app means personal
+    /// information stays visible under a user's belief that it is gone.
+    ///
+    /// Empty means "not available" (plain text, or a Vision build that refused the query); the
+    /// classifier then falls back to proportional interpolation. A code unit Vision would not
+    /// measure (whitespace, typically) is stored as `.zero` and ignored when unioning a range.
+    public let characterBoxes: [CGRect]
+
+    public init(
+        text: String,
+        utf16Range: Range<Int>,
+        boundingBox: CGRect = .zero,
+        characterBoxes: [CGRect] = []
+    ) {
         self.text = text
         self.utf16Range = utf16Range
         self.boundingBox = boundingBox
+        self.characterBoxes = characterBoxes
     }
 
-    public init(text: String, nsRange: NSRange, boundingBox: CGRect = .zero) {
+    public init(
+        text: String,
+        nsRange: NSRange,
+        boundingBox: CGRect = .zero,
+        characterBoxes: [CGRect] = []
+    ) {
         self.init(text: text,
                   utf16Range: nsRange.location ..< (nsRange.location + nsRange.length),
-                  boundingBox: boundingBox)
+                  boundingBox: boundingBox,
+                  characterBoxes: characterBoxes)
+    }
+
+    // Hand-written so spans persisted before `characterBoxes` existed still decode. A document
+    // saved by an earlier build must not become unreadable because detection got more precise.
+    private enum CodingKeys: String, CodingKey {
+        case text, utf16Range, boundingBox, characterBoxes
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        text = try container.decode(String.self, forKey: .text)
+        utf16Range = try container.decode(Range<Int>.self, forKey: .utf16Range)
+        boundingBox = try container.decode(CGRect.self, forKey: .boundingBox)
+        characterBoxes = try container.decodeIfPresent([CGRect].self, forKey: .characterBoxes) ?? []
+    }
+
+    /// The true Vision-space box for a range of ``text``, measured rather than interpolated.
+    ///
+    /// `range` is in UTF-16 units **local to this span**. Returns `nil` when no measured geometry
+    /// is available for that range, which is the caller's signal to fall back.
+    public func measuredBox(forLocalRange range: Range<Int>) -> CGRect? {
+        guard !characterBoxes.isEmpty else { return nil }
+        let lower = min(max(range.lowerBound, 0), characterBoxes.count)
+        let upper = min(max(range.upperBound, lower), characterBoxes.count)
+        guard lower < upper else { return nil }
+
+        var union: CGRect?
+        for box in characterBoxes[lower ..< upper] where box != .zero {
+            union = union.map { $0.union(box) } ?? box
+        }
+        return union
     }
 
     public var nsRange: NSRange {

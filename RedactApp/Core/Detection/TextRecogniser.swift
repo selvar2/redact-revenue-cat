@@ -97,12 +97,13 @@ public struct TextRecogniser: Sendable {
     /// Exposed at `internal` visibility so the detection tests can exercise the offset
     /// arithmetic without needing a real image.
     static func assemble(_ observations: [VNRecognizedTextObservation]) -> RecognisedText {
-        var lines: [(String, CGRect)] = []
+        var lines: [(String, CGRect, [CGRect])] = []
         for observation in observations {
             guard let candidate = observation.topCandidates(1).first else { continue }
             let line = candidate.string
             guard !line.isEmpty else { continue }
-            lines.append((line, observation.boundingBox))
+            lines.append((line, observation.boundingBox,
+                          characterBoxes(of: candidate, within: observation.boundingBox)))
         }
 
         // Reading order: top of the page first. Vision's y grows upward, so descending y is
@@ -122,12 +123,74 @@ public struct TextRecogniser: Sendable {
             }
             let length = (entry.0 as NSString).length
             spans.append(
-                TextSpan(text: entry.0, utf16Range: offset ..< (offset + length), boundingBox: entry.1)
+                TextSpan(text: entry.0,
+                         utf16Range: offset ..< (offset + length),
+                         boundingBox: entry.1,
+                         characterBoxes: entry.2)
             )
             text += entry.0
             offset += length
         }
 
         return RecognisedText(text: text, spans: spans)
+    }
+
+    /// Measures every character of a recognised line, one Vision-space box per UTF-16 code unit.
+    ///
+    /// `VNRecognizedText.boundingBox(for:)` is the only source of truth about *where inside a line*
+    /// a substring sits. Without it the classifier can only divide the line box by character count,
+    /// which is wrong by a growing margin across any proportional typeface — the defect that let the
+    /// sample payslip export with the employee's name uncovered. Querying once per character here,
+    /// off the main actor and once per page, buys exact geometry for every detection downstream.
+    ///
+    /// Two classes of answer are rejected, both observed on the bundled sample:
+    ///
+    /// - **Whitespace is never queried.** Asked for the box of a lone space, Vision returns a quad
+    ///   spanning most of the page rather than failing. Unioned into a detection's geometry that
+    ///   became a bar over the entire top half of the payslip — every identifier on the sample
+    ///   contains a space, so this was not an edge case.
+    /// - **Anything outside the line is dropped.** A character's box that does not sit inside its
+    ///   own line's box is not a measurement of that character, whatever it is.
+    ///
+    /// Rejected characters are recorded as `.zero`; ``TextSpan/measuredBox(forLocalRange:)``
+    /// unions around them, which is correct — a space between two measured glyphs is covered by
+    /// the union of its neighbours.
+    static func characterBoxes(of candidate: VNRecognizedText, within lineBox: CGRect) -> [CGRect] {
+        let string = candidate.string
+        var boxes: [CGRect] = []
+        boxes.reserveCapacity((string as NSString).length)
+
+        var index = string.startIndex
+        while index < string.endIndex {
+            let next = string.index(after: index)
+            let character = string[index ..< next]
+
+            var box = CGRect.zero
+            if !character.allSatisfy(\.isWhitespace),
+               let measured = (try? candidate.boundingBox(for: index ..< next))?.boundingBox,
+               isPlausible(measured, within: lineBox) {
+                box = measured
+            }
+
+            // A Character can be several UTF-16 units; offsets downstream are UTF-16, so each
+            // unit of a grapheme carries that grapheme's box.
+            for _ in 0 ..< character.utf16.count {
+                boxes.append(box)
+            }
+            index = next
+        }
+        return boxes
+    }
+
+    /// A character box is trusted only if it is really inside the line it came from.
+    ///
+    /// The tolerance exists because Vision's per-character quads sit a fraction of a percent
+    /// outside the line box at ascenders and descenders; it is far tighter than the drift this
+    /// whole mechanism exists to prevent.
+    private static func isPlausible(_ box: CGRect, within lineBox: CGRect) -> Bool {
+        guard box.width > 0, box.height > 0 else { return false }
+        let slack = max(lineBox.height, 0.005)
+        let permitted = lineBox.insetBy(dx: -slack, dy: -slack)
+        return permitted.contains(box)
     }
 }

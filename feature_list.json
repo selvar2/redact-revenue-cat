@@ -43,9 +43,9 @@
       "name": "PII detection engine",
       "phase": 1,
       "owner": "detect-engine",
-      "status": "verified",
+      "status": "built",
       "acceptance": "Detects PAN, Aadhaar, IFSC, card, email, phone, GSTIN, and NL person/place/org names with bounding boxes; unit tests over a fixture corpus pass",
-      "notes": "Verifier 2026-08-17: checksums independently confirmed against published algorithms; false-positive coverage real. Known honest gap: FoundationModelClassifier delegates 100% to HeuristicClassifier on iOS 26 \u2014 see docs/memory/gotchas/foundation-models-api-unconfirmed.md."
+      "notes": "Verifier 2026-08-17: checksums independently confirmed against published algorithms; false-positive coverage real. Known honest gap: FoundationModelClassifier delegates 100% to HeuristicClassifier on iOS 26 — see docs/memory/gotchas/foundation-models-api-unconfirmed.md. | Verifier 2026-08-17 (phase 2), status REVOKED from verified: driven in the simulator, HeuristicClassifier.subBox (Core/Detection/PIIClassifier.swift:89) interpolates a sub-span box by character COUNT across the Vision line box. With proportional type the projection drifts, and in the bundled sample the exported PNG leaves the leading character of the date of birth and of the IFSC visible, while the person name 'Ananya Mehra' gets no bar at all (its bar lands on the word 'August'). Detection logic is right; the geometry it hands the engine is not. Unit tests pass because they assert monotonicity/containment, never pixel truth against real OCR."
     },
     {
       "id": "F04",
@@ -70,7 +70,7 @@
       "name": "Scan / import",
       "phase": 2,
       "owner": "feature-scan",
-      "status": "not_started",
+      "status": "in_progress",
       "acceptance": "VisionKit capture plus photo and PDF import; limited photo access only; purpose strings explain why"
     },
     {
@@ -78,24 +78,27 @@
       "name": "Redaction editor",
       "phase": 2,
       "owner": "feature-editor",
-      "status": "not_started",
-      "acceptance": "Tap detected spans to toggle; draw manual boxes; undo/redo; signature scanline animation honours reduceMotion"
+      "status": "built",
+      "acceptance": "Tap detected spans to toggle; draw manual boxes; undo/redo; signature scanline animation honours reduceMotion",
+      "notes": "Verifier 2026-08-17: exists and runs (was stale at not_started). Scanline reveal, undo/redo, draw mode, detection sheet and VoiceOver labels/values/custom actions all present and reduceMotion is honoured via ScanlineDirector.reveal(reduceMotion:). NOT verified: bars are drawn from the same drifting geometry as F03, so the editor shows the user a bar that does not cover the text."
     },
     {
       "id": "F08",
       "name": "Export (PNG / PDF)",
       "phase": 2,
       "owner": "feature-export",
-      "status": "not_started",
-      "acceptance": "Share sheet export; free tier PNG single page, Pro multi-page PDF; output passes the irreversibility test"
+      "status": "built",
+      "acceptance": "Share sheet export; free tier PNG single page, Pro multi-page PDF; output passes the irreversibility test",
+      "note": "Verifier 2026-08-17: the escalated 'detect and offer' annotation decision is genuinely well built — AnnotationAudit scans every page, gates on page.selection(for:) so it only warns when text actually sits under the mark, records no sample of the hidden text, and InsecureMarkupSheet is jargon-free. AnnotationAuditTests are real (fixture-covers-text control, signature-in-blank-margin false-positive control, unfilled-outline control, and a flatten test that asserts PDFDocument.string no longer yields the secret). PNG export driven end to end in the simulator and it saves, shares and decrements the quota. NOT verified: the Pro multi-page PDF path and the flatten selection were never exercised at runtime, and the exported PNG still leaks characters because of the F03 geometry defect."
     },
     {
       "id": "F09",
       "name": "Library",
       "phase": 2,
       "owner": "feature-library",
-      "status": "not_started",
-      "acceptance": "Lists past documents with thumbnails; search; swipe delete purges files"
+      "status": "built",
+      "acceptance": "Lists past documents with thumbnails; search; swipe delete purges files",
+      "note": "LibraryView (List: thumbnails, search by name/date, swipe delete, multi-select), DocumentDetailView (page preview, facts, ShareLink re-share, Pro audit log with a factual free-tier lock), LibraryModel (staged delete + undo snackbar, commits via DocumentStore.delete so FileVault purges files), ThumbnailLoader (ImageIO downsample + NSCache). Syntax-checked only (swiftc -parse). Not built, not verified. | Verifier 2026-08-17: delete path traced and it does purge — LibraryModel.commit -> DocumentStore.delete -> FileVault.delete(relativePaths:), files removed before the record, plus commitPendingDeletionNow() on background/disappear so quitting inside the undo window still purges. Swipe delete is mirrored as an accessibilityAction. Not driven at runtime this pass, so it stays built."
     },
     {
       "id": "F10",
@@ -110,8 +113,9 @@
       "name": "Onboarding and bundled sample document",
       "phase": 2,
       "owner": "onboarding",
-      "status": "not_started",
-      "acceptance": "A reviewer reaches a redacted result in under 30 seconds from a cold launch with zero setup"
+      "status": "verified",
+      "acceptance": "A reviewer reaches a redacted result in under 30 seconds from a cold launch with zero setup",
+      "notes": "onboarding 2026-08-17: 3-screen skippable explainer (UserDefaults `onboarding.completed.v1`), code-drawn fictional payslip (SampleDocument), About/legal screen with LegalLinks URLs, and the app-level wiring Phase 1 left missing (NavigationStack + AppCoordinator, RouteDestination, AppEnvironment: ModelContainer + FileVault.prepare() + purgeOrphanedFiles(), .ambientBackground() on RootView). Typechecked under Swift 6 complete strict concurrency only; not built or run in the simulator, so the under-30-seconds acceptance is reasoned, not observed. | Verifier 2026-08-17: OBSERVED in the iOS 26.5 simulator from a clean install. Cold launch -> Continue -> Continue -> 'Try it on a sample document' renders the payslip, runs OCR and classification and opens the editor with 10 detections marked: 3 taps, ~20 seconds, no camera, no photo permission, no account, no typing. 'Review and export' + 'Export' (2 more taps) produces a saved redacted PNG in the vault. The under-30-seconds, zero-setup acceptance is met. Caveat recorded against F03, not F11: the redacted result the reviewer sees still shows the employee name."
     },
     {
       "id": "F12",
@@ -127,7 +131,7 @@
       "phase": 4,
       "owner": "human+asc",
       "status": "not_started",
-      "acceptance": "Real (non-Test-Store) API key in use; RevenueCat shows a Store API call \u2014 MILESTONE 4"
+      "acceptance": "Real (non-Test-Store) API key in use; RevenueCat shows a Store API call — MILESTONE 4"
     },
     {
       "id": "F14",

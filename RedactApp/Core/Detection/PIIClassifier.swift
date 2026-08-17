@@ -42,24 +42,36 @@ extension PIIClassifier {
 public struct HeuristicClassifier: PIIClassifier {
     private let patterns: PatternDetector
     private let names: NameDetector
+    private let labels: LabelledFieldDetector
 
-    public init(patterns: PatternDetector = PatternDetector(), names: NameDetector = NameDetector()) {
+    public init(
+        patterns: PatternDetector = PatternDetector(),
+        names: NameDetector = NameDetector(),
+        labels: LabelledFieldDetector = LabelledFieldDetector()
+    ) {
         self.patterns = patterns
         self.names = names
+        self.labels = labels
     }
 
     public func classify(_ candidates: [TextSpan]) async throws -> [ClassifiedSpan] {
-        var results: [ClassifiedSpan] = []
+        var results: [ClassifiedSpan] = labelledNamesAcrossLines(candidates)
 
         for candidate in candidates {
             let box = candidate.boundingBox
             let unitCount = (candidate.text as NSString).length
+            // Prefer geometry Vision actually measured for these characters. Interpolating the
+            // line box by character count only holds for a monospaced face; on the proportional
+            // type every real document uses it slides the bar off the words it is meant to
+            // destroy. The interpolation stays as the fallback for spans with no measurements.
             let project: (Range<Int>) -> CGRect = { local in
-                Self.subBox(of: box, localRange: local, unitCount: unitCount)
+                candidate.measuredBox(forLocalRange: local)
+                    ?? Self.subBox(of: box, localRange: local, unitCount: unitCount)
             }
 
             let local = patterns.detect(in: candidate.text, boundingBoxProvider: project)
                 + names.detect(in: candidate.text, boundingBoxProvider: project)
+                + labels.detect(in: candidate.text, boundingBoxProvider: project)
 
             // Shift span offsets from candidate-local back into document coordinates so the
             // editor can highlight the right characters of the whole document.
@@ -79,13 +91,43 @@ public struct HeuristicClassifier: PIIClassifier {
         return DetectedPII.resolvingOverlaps(results)
     }
 
+    /// Claims the line *after* a bare field label as that field's value.
+    ///
+    /// OCR reads a two-column form as a stack: the sample payslip yields `Employee` and
+    /// `Ananya Mehra` as separate lines, so no single-line detector can ever see the pair. Looking
+    /// one line ahead is what lets the label do its work. Spans here are already in document
+    /// coordinates, because a candidate's `utf16Range` is document-relative to begin with.
+    private func labelledNamesAcrossLines(_ candidates: [TextSpan]) -> [ClassifiedSpan] {
+        var found: [ClassifiedSpan] = []
+        for (index, candidate) in candidates.enumerated() {
+            guard LabelledFieldDetector.isNameLabel(candidate.text) else { continue }
+            guard index + 1 < candidates.count else { continue }
+
+            let value = candidates[index + 1]
+            guard LabelledFieldDetector.looksLikeAPersonName(value.text) else { continue }
+
+            let local = 0 ..< (value.text as NSString).length
+            let box = value.measuredBox(forLocalRange: local) ?? value.boundingBox
+            found.append(
+                DetectedPII(
+                    span: TextSpan(text: value.text, utf16Range: value.utf16Range, boundingBox: box),
+                    kind: .personName,
+                    confidence: 0.8
+                )
+            )
+        }
+        return found
+    }
+
     /// Interpolates a sub-region of an OCR bounding box by character position.
     ///
-    /// Vision returns one box per recognised line, not per character. Splitting the line's
-    /// width proportionally is an approximation — proportional spacing means it is not exact —
-    /// but it is stable, monotonic, and always contained by the parent box. The redaction
-    /// layer is responsible for the safety margin it adds on top; this function must never
-    /// return a box *larger* than its parent, or a bar could be drawn over the wrong line.
+    /// **This is the fallback, not the primary path.** Real geometry comes from
+    /// ``TextSpan/measuredBox(forLocalRange:)``, which reports what Vision measured for those
+    /// exact characters. Splitting the line box proportionally is only correct for a monospaced
+    /// face; on proportional type it drifts, and a drifted bar means personal information stays
+    /// on the page (see `docs/memory/gotchas/vision-per-character-geometry.md`). It is kept for
+    /// spans that carry no per-character measurements at all, where a slightly wrong box is
+    /// still better than none. It is stable, monotonic, and never larger than its parent.
     static func subBox(of parent: CGRect, localRange: Range<Int>, unitCount: Int) -> CGRect {
         guard parent != .zero, unitCount > 0 else { return .zero }
         let start = min(max(localRange.lowerBound, 0), unitCount)

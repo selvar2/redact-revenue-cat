@@ -19,7 +19,7 @@ import Observation
 public final class UsageTracker {
 
     /// Documents a free user may process per calendar month.
-    public static let freeMonthlyAllowance = 3
+    nonisolated public static let freeMonthlyAllowance = 3
 
     /// Shared instance backed by `UserDefaults.standard`.
     public static let shared = UsageTracker()
