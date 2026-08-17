@@ -1,0 +1,146 @@
+{
+  "project": "Redact",
+  "bundle_id": "com.senthilnathanraja.redact",
+  "min_ios": "17.0",
+  "submission_target": "2026-09-05",
+  "shipaton_close": "2026-09-30",
+  "_status_values": ["not_started", "in_progress", "built", "verified", "blocked"],
+  "_rule": "Builders may write up to 'built'. ONLY the verifier agent writes 'verified'. See AGENTS.md.",
+  "features": [
+    {
+      "id": "F00",
+      "name": "Harness, memory vault, governance docs",
+      "phase": 0,
+      "owner": "orchestrator",
+      "status": "in_progress",
+      "acceptance": "init.sh and verify.sh run clean; memory_index.py builds and answers a query; all six governance docs exist"
+    },
+    {
+      "id": "F01",
+      "name": "Xcode project scaffold",
+      "phase": 0,
+      "owner": "scaffold",
+      "status": "not_started",
+      "acceptance": "SwiftUI app builds for iOS 17 min and launches in the iOS 26.5 simulator showing a real first screen"
+    },
+    {
+      "id": "F02",
+      "name": "Design system (tokens, glass surfaces, motion)",
+      "phase": 1,
+      "owner": "design-system",
+      "status": "not_started",
+      "acceptance": "No hardcoded colour/font/spacing anywhere; token gallery renders; light-independent dark palette matches DEC-002"
+    },
+    {
+      "id": "F03",
+      "name": "PII detection engine",
+      "phase": 1,
+      "owner": "detect-engine",
+      "status": "not_started",
+      "acceptance": "Detects PAN, Aadhaar, IFSC, card, email, phone, GSTIN, and NL person/place/org names with bounding boxes; unit tests over a fixture corpus pass"
+    },
+    {
+      "id": "F04",
+      "name": "Irreversible redaction core",
+      "phase": 1,
+      "owner": "redaction-core",
+      "status": "not_started",
+      "acceptance": "Test OCRs our own exported output and asserts the secret string is UNRECOVERABLE; EXIF/GPS/PDF metadata stripped"
+    },
+    {
+      "id": "F05",
+      "name": "SwiftData persistence (local only)",
+      "phase": 1,
+      "owner": "persistence",
+      "status": "not_started",
+      "acceptance": "Documents persist across launch; no iCloud, no network; delete removes all derived files"
+    },
+    {
+      "id": "F06",
+      "name": "Scan / import",
+      "phase": 2,
+      "owner": "feature-scan",
+      "status": "not_started",
+      "acceptance": "VisionKit capture plus photo and PDF import; limited photo access only; purpose strings explain why"
+    },
+    {
+      "id": "F07",
+      "name": "Redaction editor",
+      "phase": 2,
+      "owner": "feature-editor",
+      "status": "not_started",
+      "acceptance": "Tap detected spans to toggle; draw manual boxes; undo/redo; signature scanline animation honours reduceMotion"
+    },
+    {
+      "id": "F08",
+      "name": "Export (PNG / PDF)",
+      "phase": 2,
+      "owner": "feature-export",
+      "status": "not_started",
+      "acceptance": "Share sheet export; free tier PNG single page, Pro multi-page PDF; output passes the irreversibility test"
+    },
+    {
+      "id": "F09",
+      "name": "Library",
+      "phase": 2,
+      "owner": "feature-library",
+      "status": "not_started",
+      "acceptance": "Lists past documents with thumbnails; search; swipe delete purges files"
+    },
+    {
+      "id": "F10",
+      "name": "RevenueCat paywall and entitlements",
+      "phase": 3,
+      "owner": "feature-paywall",
+      "status": "not_started",
+      "acceptance": "Test Store purchase completes and flips entitlement; Restore Purchases button present; EULA and Privacy links visible; price, period and auto-renewal stated"
+    },
+    {
+      "id": "F11",
+      "name": "Onboarding and bundled sample document",
+      "phase": 2,
+      "owner": "onboarding",
+      "status": "not_started",
+      "acceptance": "A reviewer reaches a redacted result in under 30 seconds from a cold launch with zero setup"
+    },
+    {
+      "id": "F12",
+      "name": "Accessibility pass",
+      "phase": 5,
+      "owner": "verifier",
+      "status": "not_started",
+      "acceptance": "VoiceOver navigates every screen and every detected span; largest Dynamic Type does not clip; reduceMotion honoured"
+    },
+    {
+      "id": "F13",
+      "name": "App Store Connect record and IAP products",
+      "phase": 4,
+      "owner": "human+asc",
+      "status": "not_started",
+      "acceptance": "Real (non-Test-Store) API key in use; RevenueCat shows a Store API call — MILESTONE 4"
+    },
+    {
+      "id": "F14",
+      "name": "TestFlight build",
+      "phase": 5,
+      "owner": "human+asc",
+      "status": "not_started",
+      "acceptance": "Build processed, installed on a real device, sandbox purchase verified, human sign-off given"
+    },
+    {
+      "id": "F15",
+      "name": "App Store submission",
+      "phase": 5,
+      "owner": "human+asc",
+      "status": "not_started",
+      "acceptance": "asc validate passes with zero blockers; submitted on or before 2026-09-05"
+    }
+  ],
+  "milestones": {
+    "M1_registration": "complete",
+    "M2_revenuecat_project": "not_started",
+    "M3_test_purchase": "not_started",
+    "M4_store_api_call": "not_started",
+    "M5_real_purchase": "not_started"
+  }
+}

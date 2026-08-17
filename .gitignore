@@ -1,0 +1,39 @@
+# ─── SECRETS — never commit. See CLAUDE.md rule 9 ───
+*.p8
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision
+.asc-config.json
+.env
+.env.*
+secrets/
+AuthKey_*
+
+# ─── Xcode ───
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+.swiftpm/
+
+# ─── SPM ───
+.build/
+Packages/
+Package.resolved
+
+# ─── macOS ───
+.DS_Store
+
+# ─── Generated ───
+docs/memory-index.json
+metadata/.cache/
+
+# ─── Obsidian local state (config itself IS committed) ───
+docs/.obsidian/workspace.json
+docs/.obsidian/workspace-mobile.json
+docs/.obsidian/cache

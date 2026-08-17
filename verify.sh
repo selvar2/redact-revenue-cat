@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# verify.sh — the deterministic gate.
+#
+# This is the cheap, repeatable half of verification. It answers "does it build
+# and do the tests pass?" so the verifier AGENT can spend its one pass per phase
+# on judgment instead of mechanics. Run this as often as you like; it is free.
+#
+# Exit 0 = gate passed. Any non-zero = the feature is not done. No exceptions.
+
+set -uo pipefail
+
+cd "$(dirname "$0")"
+
+SCHEME="RedactApp"
+PROJECT="RedactApp/RedactApp.xcodeproj"
+DESTINATION="platform=iOS Simulator,name=iPhone 17 Pro"
+
+RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[0;33m'; NC=$'\033[0m'
+FAILURES=0
+
+step()  { printf "\n${YELLOW}▸ %s${NC}\n" "$1"; }
+pass()  { printf "${GREEN}  ✓ %s${NC}\n" "$1"; }
+fail()  { printf "${RED}  ✗ %s${NC}\n" "$1"; FAILURES=$((FAILURES + 1)); }
+
+# ── 1. Toolchain ────────────────────────────────────────────────────────────
+step "Toolchain"
+command -v xcodebuild >/dev/null 2>&1 && pass "xcodebuild $(xcodebuild -version | head -1)" \
+  || fail "xcodebuild not found"
+command -v python3 >/dev/null 2>&1 && pass "python3 $(python3 --version 2>&1 | cut -d' ' -f2)" \
+  || fail "python3 not found"
+
+# ── 2. Secret leak check — runs before anything else can commit ─────────────
+step "Secret scan (CLAUDE.md rule 9)"
+LEAKED=$(git ls-files 2>/dev/null | grep -Ei '\.(p8|p12|mobileprovision|cer)$' || true)
+if [ -n "$LEAKED" ]; then
+  fail "SECRETS TRACKED BY GIT: $LEAKED"
+else
+  pass "no key material tracked"
+fi
+
+# ── 3. No-network rule — rule 1, the foundation of our privacy claim ───────
+step "No-network rule (CLAUDE.md rule 1)"
+if [ -d RedactApp ]; then
+  # RevenueCat is the single permitted exception; exclude its own SDK sources.
+  OFFENDERS=$(grep -rn --include=*.swift -E 'URLSession|URLRequest|NWConnection|CFNetwork' RedactApp 2>/dev/null \
+    | grep -v -i 'revenuecat' || true)
+  if [ -n "$OFFENDERS" ]; then
+    fail "network API used outside RevenueCat:"
+    echo "$OFFENDERS" | head -10 | sed 's/^/      /'
+  else
+    pass "no networking outside RevenueCat"
+  fi
+else
+  printf "  – skipped (no source yet)\n"
+fi
+
+# ── 4. Placeholder check — rule 10, a direct Guideline 4.2 rejection cause ──
+step "Placeholder scan (CLAUDE.md rule 10)"
+if [ -d RedactApp ]; then
+  PLACEHOLDERS=$(grep -rn --include=*.swift -iE '"(coming soon|lorem ipsum|TODO|FIXME|placeholder)' RedactApp 2>/dev/null || true)
+  if [ -n "$PLACEHOLDERS" ]; then
+    fail "user-visible placeholder strings found:"
+    echo "$PLACEHOLDERS" | head -10 | sed 's/^/      /'
+  else
+    pass "no placeholder strings in user-facing code"
+  fi
+else
+  printf "  – skipped (no source yet)\n"
+fi
+
+# ── 5. Build ────────────────────────────────────────────────────────────────
+step "Build"
+if [ -d "$PROJECT" ]; then
+  if xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+       -destination "$DESTINATION" -quiet build 2>&1 | tail -25; then
+    pass "build succeeded"
+  else
+    fail "build failed"
+  fi
+else
+  printf "  – skipped (project not scaffolded yet)\n"
+fi
+
+# ── 6. Tests ────────────────────────────────────────────────────────────────
+step "Tests"
+if [ -d "$PROJECT" ]; then
+  if xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
+       -destination "$DESTINATION" -quiet test 2>&1 | tail -30; then
+    pass "tests passed"
+  else
+    fail "tests failed"
+  fi
+else
+  printf "  – skipped (project not scaffolded yet)\n"
+fi
+
+# ── 7. Memory freshness — an un-logged session is a lost session ───────────
+step "Memory layer"
+TODAY=$(date +%Y-%m-%d)
+if ls docs/memory/sessions/${TODAY}-*.md >/dev/null 2>&1; then
+  pass "session log exists for ${TODAY}"
+else
+  printf "  ${YELLOW}! no session log for %s yet${NC}\n" "$TODAY"
+fi
+python3 tools/memory_index.py build >/dev/null 2>&1 \
+  && pass "memory index rebuilt" || fail "memory index build failed"
+
+# ── Result ──────────────────────────────────────────────────────────────────
+echo
+if [ "$FAILURES" -eq 0 ]; then
+  printf "${GREEN}━━━ GATE PASSED ━━━${NC}\n"
+  exit 0
+else
+  printf "${RED}━━━ GATE FAILED — %s check(s) ━━━${NC}\n" "$FAILURES"
+  printf "Nothing is 'done' until this exits 0. See CLAUDE.md > Definition of Done.\n"
+  exit 1
+fi
