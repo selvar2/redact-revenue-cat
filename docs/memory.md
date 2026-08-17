@@ -1,7 +1,7 @@
 ---
 id: memory-index
 date: 2026-08-17
-phase: 4
+phase: 5
 tags: [index, state]
 status: living
 ---
@@ -44,6 +44,7 @@ Phase 1 — [[phase-1-technical]] · [[phase-1-non-technical]] · [[phase-1-guid
 Phase 2 — [[phase-2-technical]] · [[phase-2-non-technical]] · [[phase-2-guide-for-kids]]
 Phase 3 — [[phase-3-technical]] · [[phase-3-non-technical]] · [[phase-3-guide-for-kids]]
 Phase 4 — [[phase-4-technical]] · [[phase-4-non-technical]] · [[phase-4-guide-for-kids]]
+Phase 5 — [[phase-5-technical]] · [[phase-5-non-technical]] · [[phase-5-guide-for-kids]]
 
 | Feature | Status | Note |
 |---|---|---|
@@ -59,15 +60,12 @@ Phase 4 — [[phase-4-technical]] · [[phase-4-non-technical]] · [[phase-4-guid
 | F11 onboarding + sample | **`verified`** | Reviewer path: 3 taps, ~20s, no camera or account |
 
 **Immediate next actions:**
-1. **Human — rotate `AuthKey_CDCMHRBW3C`.** Admin-scoped and pasted into a chat transcript.
-   Regenerate as **App Manager**. Required for `asc` TestFlight uploads, and it also unblocks
-   RevenueCat's automatic product import and price sync ([[DEC-007-apple-key-types]]).
+1. **TestFlight beta group + tester**, then install on a real device. `testflight: {}` is empty;
+   the build itself is `VALID` and ready.
 2. **Localization** on both IAP products — display name + description. Submission blocker.
-3. Phase 5 — `brew install asc`, `asc login`, `asc signing setup`, build, upload to **TestFlight**,
-   test on a real device, then submit by **2026-09-05**.
-4. Design the **remote paywall** in RevenueCat's editor (HAMM award capability; native fallback
-   renders today).
-5. Independent verifier pass over F02–F10 — the Phase 3 fixer cannot verify itself.
+3. **App Store metadata** — description, keywords, screenshots. Submission blocker.
+4. **Human — rotate `AuthKey_CDCMHRBW3C`** to App Manager scope ([[DEC-007-apple-key-types]]).
+5. Submit for review by **2026-09-05**.
 
 | Milestone | State |
 |---|---|
@@ -109,6 +107,10 @@ RevenueCat App Store app    app8a75e71942  "Redact (App Store)"
 Public SDK key (safe)       appl_DuknWVjObDvejcuDZURluQLtfDS
 Entitlement / Offering      pro / default  ($rc_monthly, $rc_annual)
 Product identifiers         redact_pro_monthly, redact_pro_annual
+Build (TestFlight)          v1.0 (2) · processingState VALID · uploaded 2026-08-17
+  archive                   build/Redact.xcarchive · export build/export/RedactApp.ipa (12,021,381 B)
+  signing                   Apple Distribution: SENTHILNATHAN RAJA (8837BPRM4M), login keychain
+  ⚠ export MUST run with    PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"  (see gotcha)
 GitHub                      github.com/selvar2/redact-revenue-cat  (public)
 Legal pages (200 OK)        selvar2.github.io/redact-revenue-cat/{privacy,terms,support}.html
 ```

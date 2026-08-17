@@ -45,7 +45,7 @@ Not the Grand Prize; that goes to teams with existing distribution. Three are wi
 | **2** | Scan → Editor → Export loop | A document goes photo → redacted export, end to end | ✅ complete — observed in the simulator, artifact inspected at pixel level |
 | **3** | RevenueCat SDK + paywall | Test Store purchase flips the entitlement; **M3** | ✅ complete — purchase observed in the simulator, entitlement flipped, Export switched to Pro copy |
 | **4** | App Store Connect record, IAP products, real key | RevenueCat shows a Store API call; **M4** | ◀ next |
-| **5** | Polish, accessibility, final audit, TestFlight, submit | `asc validate` zero blockers; submitted by 09-05 | ◀ next |
+| **5** | Polish, accessibility, final audit, TestFlight, submit | `asc validate` zero blockers; submitted by 09-05 | ◀ in progress — build v1.0(2) **VALID** on App Store Connect |
 | **6** | Live | Own purchase completes; **M5**; Devpost writeup + demo video | ⬜ |
 
 ### Every phase closes the same way — no exceptions
