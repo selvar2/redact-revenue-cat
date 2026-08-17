@@ -59,17 +59,15 @@ Phase 4 — [[phase-4-technical]] · [[phase-4-non-technical]] · [[phase-4-guid
 | F11 onboarding + sample | **`verified`** | Reviewer path: 3 taps, ~20s, no camera or account |
 
 **Immediate next actions:**
-1. **Create the two subscription products in App Store Connect.** Group "Redact Pro" (`22315273`)
-   exists but is **empty** — no sandbox or real purchase can succeed until `redact_pro_monthly` and
-   `redact_pro_annual` exist there and are imported into RevenueCat. This is the single blocker
-   between here and M5.
-2. Independent verifier pass over **F02–F10** — the Phase 3 fixer applied nine fixes and cannot
-   verify itself (`CLAUDE.md` rule 7).
-3. **Human:** rotate `AuthKey_CDCMHRBW3C` — Admin-scoped, pasted into a chat transcript, and needed
-   for Phase 5 TestFlight uploads anyway. Regenerate as **App Manager** ([[DEC-007-apple-key-types]]).
-4. Design the **remote paywall** in RevenueCat's editor — the native fallback renders today; the
-   remote one is the HAMM-award capability.
-5. Phase 5 — TestFlight, then App Store submission by **2026-09-05**.
+1. **Human — rotate `AuthKey_CDCMHRBW3C`.** Admin-scoped and pasted into a chat transcript.
+   Regenerate as **App Manager**. Required for `asc` TestFlight uploads, and it also unblocks
+   RevenueCat's automatic product import and price sync ([[DEC-007-apple-key-types]]).
+2. **Localization** on both IAP products — display name + description. Submission blocker.
+3. Phase 5 — `brew install asc`, `asc login`, `asc signing setup`, build, upload to **TestFlight**,
+   test on a real device, then submit by **2026-09-05**.
+4. Design the **remote paywall** in RevenueCat's editor (HAMM award capability; native fallback
+   renders today).
+5. Independent verifier pass over F02–F10 — the Phase 3 fixer cannot verify itself.
 
 | Milestone | State |
 |---|---|
@@ -77,7 +75,7 @@ Phase 4 — [[phase-4-technical]] · [[phase-4-non-technical]] · [[phase-4-guid
 | M2 RevenueCat project | ✅ complete — project created, Test Store wired, 2026-08-17 |
 | M3 Test purchase | ✅ **complete — observed end to end in the simulator, 2026-08-17** |
 | M4 Store API call | ✅ **complete — real `appl_` key live, StoreKit verified in device log, 2026-08-17** |
-| M5 Real purchase | ⬜ next — needs IAP products, then app live on the App Store |
+| M5 Real purchase | ⬜ next — catalog is READY; needs the app live on the App Store |
 
 Apple monetization setup finished 2026-08-14 in a single day: Paid Apps Agreement Active, bank
 account Active, W-8BEN Active. Legal URLs are now **published and returning 200**. Remaining risk is App Review latency alone.
@@ -97,11 +95,17 @@ Apple ID (Account Holder)   SCRIPTKIDAPPLE7@GMAIL.COM   (SENTHILNATHAN RAJA)
 Team ID                     8837BPRM4M
 Bundle ID                   com.senthilnathanraja.redact
 App Store Connect App ID    6802355309   "Redact: Hide Personal Info"   SKU REDACT-IOS-2026
-Subscription group          "Redact Pro"  22315273        ← EMPTY, products not yet created
+Subscription group          "Redact Pro"  22315273
+  redact_pro_monthly        Apple ID 6802371547 · 1 month · ₹29 · ALL countries · ✅ priced
+  redact_pro_annual         Apple ID 6802372486 · 1 year  · ₹29 · ALL countries · ✅ priced
+  (both: localization MISSING — submission blocker, not a sandbox blocker)
 In-App Purchase Key ID      BU27GRYDV3
 Issuer ID                   34fe7ae7-f498-44e2-82ae-a34c1e95e7d7
 RevenueCat project          51ce66cf
 RevenueCat App Store app    app8a75e71942  "Redact (App Store)"
+  products                  redact_pro_monthly (prod5572aba54d), redact_pro_annual
+  entitlement `pro`         4 products attached: 2 Test Store + 2 App Store
+  offering `default`        $rc_monthly / $rc_annual each carry BOTH store variants
 Public SDK key (safe)       appl_DuknWVjObDvejcuDZURluQLtfDS
 Entitlement / Offering      pro / default  ($rc_monthly, $rc_annual)
 Product identifiers         redact_pro_monthly, redact_pro_annual

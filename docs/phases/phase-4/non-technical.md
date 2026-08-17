@@ -110,3 +110,58 @@ Three other open items:
    involved.
 
 **Related:** [[phase-3-non-technical]] · [[plan]]
+
+---
+
+## Addendum — the products are now on the shelf
+
+When the first version of this document was written, the shop was connected but **empty**. It now has
+stock.
+
+### What's for sale
+
+| Plan | Price | Where |
+|---|---|---|
+| Redact Pro — Monthly | ₹29/month | All 175 countries |
+| Redact Pro — Annual | ₹29/year | All 175 countries |
+
+Apple converts that base price into every local currency automatically.
+
+### Why ₹29 and not ₹1
+
+The ask was ₹1 a month — sensible, since the developer has to buy the app themselves to complete the
+final milestone, and nobody wants that to be expensive.
+
+It isn't possible. Apple doesn't let you type any price you like; you pick from a fixed ladder, and
+in India that ladder **starts at ₹29**. There is nothing cheaper in any currency — the US equivalent
+bottoms out at $0.99.
+
+So ₹29 it is, on both plans. The final milestone will cost ₹29 to complete.
+
+An unexpected side effect: pricing the yearly plan the same as the monthly one makes the yearly plan
+look extraordinary — ₹29 for a year versus ₹348 if you paid monthly is a 92% saving. The app works
+that percentage out from the real prices rather than having it written in, so the screen stays honest
+no matter what the prices are later changed to.
+
+### An error worth mentioning
+
+The prices were reported as done for both plans. On checking each one individually, only the yearly
+plan had a price — the monthly one had none. The screenshot that looked like confirmation was of the
+yearly product.
+
+This is why every claim in this project gets checked rather than accepted. The habit has now caught
+three real problems: a leaked employee name in the demo, an undetected bank account number, and this.
+None of them announced themselves.
+
+### What still stands between here and a live app
+
+1. **Product descriptions.** Each plan needs a display name and description for the App Store page.
+   Ten minutes of writing; Apple won't accept a submission without them.
+2. **A replacement access key.** The existing one grants full administrative control and has been
+   shared around. A narrower replacement is needed to upload the app for testing, and it also fixes
+   an unrelated annoyance — RevenueCat currently can't read the prices automatically because of it.
+3. **A test flight.** The app goes to a handful of real devices before it goes to the public. This
+   catches problems the simulator cannot, and Apple reviews those builds lightly, so it is a cheap
+   early warning.
+
+Then submission, then Apple's review, then live.

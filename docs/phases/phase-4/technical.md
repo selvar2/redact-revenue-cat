@@ -193,3 +193,80 @@ between screenshots, so a coordinate captured in one frame lands elsewhere in th
 6. Build, install, launch, and read the log for `SKPaymentQueue` + a resolved storefront.
 
 **Related:** [[phase-3-technical]] · [[DEC-004-no-network]] · [[gotcha-asc-form-automation]]
+
+---
+
+## Addendum — the IAP catalog (completed after the initial write-up)
+
+### Final state
+
+```
+App Store Connect · group "Redact Pro" 22315273
+  redact_pro_monthly   6802371547   1 month   ₹29.00   ALL countries   ✅ priced
+  redact_pro_annual    6802372486   1 year    ₹29.00   ALL countries   ✅ priced
+  both: Prepare for Submission · localization MISSING
+
+RevenueCat · Redact (App Store) app8a75e71942
+  entitlement `pro`    4 products (2 Test Store + 2 App Store)
+  offering `default`   $rc_monthly / $rc_annual — each carries BOTH store variants
+```
+
+The dual product per package is correct, not duplication: a RevenueCat **package holds one product
+per app**, so one package serves the Test Store build and the App Store build simultaneously. This
+is why swapping the SDK key required no code change.
+
+### Apple's price ladder is fixed, and India starts at ₹29
+
+The request was ₹1 monthly / ₹12 annual. Neither exists. Enumerated live rather than assumed:
+
+```js
+// India (INR) price points, read from the open dropdown
+[29, 49, 99, 149, 199, 249, 299, 399, …]   // 25 tiers, nothing below 29
+```
+
+USD bottoms out at `$0.99`. There are no fractional-unit tiers in any currency.
+
+**₹29 on both still yields a truthful paywall.** `PaywallPricing` computes the saving badge from the
+real `StoreProduct` values: ₹29/year against ₹29/month annualised (₹348) is a genuine ~92% saving.
+Because the number is derived rather than hardcoded, the screen cannot lie regardless of what the
+prices become — which is exactly why that rule was set in Phase 3.
+
+### Three ordering dependencies that are not documented anywhere
+
+1. **Register the App ID before creating the app record.** The New App dialog silently fails to open
+   otherwise — no error, the menu just closes.
+2. **Set Availability before Price.** Price selections do not persist while the product has no
+   countries assigned. This cost a full wizard run that appeared to succeed and silently discarded
+   the result.
+3. **Subscription Duration is a third required field** in the Create Subscription dialog, below the
+   fold. Two visible fields filled correctly still leaves Create disabled.
+
+Corollary: after any App Store Connect wizard, **reload and re-read the page**. "Confirm" is not
+proof of persistence. Every verification in this project was done that way, which is how the
+monthly-price gap was caught after it had been reported as complete.
+
+### RevenueCat product import fails without the ASC API key
+
+`/app_store_product_import` returns *"There was an unexpected error."* It reads the App Store Connect
+API, which needs an **App Store Connect API key** in RevenueCat's second, optional slot — distinct
+from the In-App Purchase key that purchase validation uses.
+
+That key was deliberately not uploaded (see [[DEC-007-apple-key-types]]): the available one was
+Admin-scoped and had been exposed. Products were created manually instead — two minutes, and no
+compromised credential propagated into another system.
+
+Consequence: the new products show `Store Status: Could not check`. Harmless. Purchase validation
+uses the In-App Purchase key (`BU27GRYDV3`), which reads **"Valid credentials"**.
+
+### Not needed: "Monthly with a 12-Month Commitment"
+
+A separate optional product *shape* offered on annual subscriptions. Skipped deliberately: it
+requires OS 26.4+ / SDK 26.5+ (our floor is iOS 17), the paywall sells **1 Year Upfront** which is
+already configured, and enabling it would create a second purchasable variant the app never offers.
+
+### Remaining before submission
+
+| Item | Blocks |
+|---|---|
+| Localization (display name + description) on both products | Submission. **Not** a sandbox purchase |
+| Rotate `AuthKey_CDCMHRBW3C` → App Manager scope | TestFlight uploads; also unblocks import + price sync |

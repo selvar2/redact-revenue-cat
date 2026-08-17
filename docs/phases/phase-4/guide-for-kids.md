@@ -166,3 +166,84 @@ That's the very next job. Then the app goes to Apple, who check it over like a t
 homework, and if they're happy — it goes live for the whole world. 🌍
 
 **Related:** [[phase-3-guide-for-kids]]
+
+---
+
+## Update — we put things on the shelf! 🛒
+
+Last time, the shop was connected but completely **empty**. Like a shop with a working till and
+nothing to buy.
+
+Now there are two things on the shelf:
+
+```
+   ┌──────────────────────┐     ┌──────────────────────┐
+   │  Redact Pro          │     │  Redact Pro          │
+   │  MONTHLY             │     │  YEARLY              │
+   │                      │     │                      │
+   │      ₹29             │     │      ₹29             │
+   │    each month        │     │    each YEAR         │
+   └──────────────────────┘     └──────────────────────┘
+```
+
+Look at those two carefully. Same price — but one lasts a *month* and the other lasts a whole
+**year**! The yearly one is obviously the better deal. (Twelve months of the monthly one would be
+₹348. So the yearly one saves you about 92%. That's a lot!)
+
+## Why not ₹1? 🤔
+
+We actually wanted to charge just **₹1**. Here's the reason, and it's quite funny.
+
+To finish the last step of this whole project, the developer has to buy his own app. With his own
+money! So naturally he'd like it to be as cheap as humanly possible. 😄
+
+But Apple doesn't let you pick any price you want. Imagine a vending machine where the buttons are
+already made: 29, 49, 99, 149… and there's simply **no button for 1**. You can only press a button
+that exists.
+
+The cheapest button in India is **₹29**. So that's what we pressed — twice.
+
+## The clever bit
+
+Remember how the app shows "Save 92%" on the yearly plan?
+
+We never *typed* 92 anywhere. The app works it out itself: it looks at both real prices, does the
+sum, and writes the answer on the screen.
+
+Why bother doing it the hard way? Because if someone changes the prices tomorrow, a typed-in number
+would become a **lie** — the screen would promise a discount that isn't real. A number the app
+calculates can never lie. It just quietly becomes the new correct answer. ✅
+
+That's a genuinely good habit: **don't write down answers you can work out.**
+
+## Oops — a good catch 🔍
+
+Someone said "both prices are done!" and it *looked* done. There was even a screenshot.
+
+But when we opened each product separately and actually looked… only **one** of them had a price.
+The other had none at all. The screenshot had been of the finished one.
+
+Nobody was being sneaky! It's just genuinely easy to look at a screen, see something that seems
+right, and move on.
+
+This is the third time checking properly has saved us. Earlier we caught the app leaving someone's
+**name** on a document it claimed to have cleaned, and a **bank account number** it hadn't even
+noticed. Neither one complained. Neither one showed an error.
+
+**The scariest problems are the quiet ones.** So we look. Every time. 👀
+
+## What's left before the whole world can use it?
+
+```
+✅  Shop connected
+✅  Things on the shelf
+⬜  Write the labels        (what each plan is called and does)
+⬜  Get a new safety key    (the old one opens too many doors)
+⬜  Test flight ✈️           (a few real phones try it first)
+⬜  Apple checks it         (like a teacher marking homework)
+⬜  LIVE! 🌍
+```
+
+The "test flight" is my favourite bit. Before an app goes out to everyone, it goes to a small group
+of real people on real phones. Simulators on a computer are brilliant, but they can't tell you
+whether something feels awkward in an actual hand. 🤳

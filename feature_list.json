@@ -157,5 +157,32 @@
     "M3_test_purchase": "complete",
     "M4_store_api_call": "complete",
     "M5_real_purchase": "not_started"
+  },
+  "iap_catalog": {
+    "app_store_connect_app_id": "6802355309",
+    "subscription_group": "22315273",
+    "products": {
+      "redact_pro_monthly": {
+        "apple_id": "6802371547",
+        "duration": "1 month",
+        "price_inr": 29,
+        "availability": "all",
+        "priced": true,
+        "localization": false
+      },
+      "redact_pro_annual": {
+        "apple_id": "6802372486",
+        "duration": "1 year",
+        "price_inr": 29,
+        "availability": "all",
+        "priced": true,
+        "localization": false
+      }
+    },
+    "revenuecat_app": "app8a75e71942",
+    "blockers_before_submission": [
+      "localization on both products",
+      "rotate AuthKey_CDCMHRBW3C to App Manager scope"
+    ]
   }
 }
