@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Support — Redact</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <a class="back" href="./">← Redact</a>
+  <h1>Support</h1>
+  <p class="meta">We read every message.</p>
+
+  <div class="callout">
+    Email <a href="mailto:rsenthil2504@gmail.com">rsenthil2504@gmail.com</a>. Please include your
+    device model and iOS version — it usually saves a round trip.
+    <br><br>
+    <strong>Never send us a document containing real personal information.</strong> We do not need it
+    to help you, and we would rather it stayed on your device where it belongs.
+  </div>
+
+  <h2>Common questions</h2>
+
+  <p><strong>Can the black bars be removed from an exported file?</strong><br>
+  No. That is the entire point of the app. Most tools draw a black shape on top of the text, leaving
+  the original readable underneath — you can select it, copy it, or pull it out with a command-line
+  tool. Redact destroys the underlying content and rebuilds the file, so there is nothing left to
+  recover.</p>
+
+  <p><strong>Does my document get uploaded anywhere?</strong><br>
+  No. Redact makes no network connections. Detection and redaction run on your device using Apple's
+  on-device frameworks. This works with the phone in airplane mode.</p>
+
+  <p><strong>It missed something sensitive.</strong><br>
+  Automatic detection is not perfect. Hold and drag anywhere on the page to cover something manually.
+  If a whole category is being missed consistently, please email us with the type of document — that
+  feedback is how detection improves.</p>
+
+  <p><strong>It flagged something that isn't sensitive.</strong><br>
+  Tap the box to keep that item. Only the items still marked are removed on export.</p>
+
+  <p><strong>I bought Pro but the app still says I'm on the free tier.</strong><br>
+  Open the paywall and tap <strong>Restore Purchases</strong>. This re-checks your Apple ID. If it
+  still does not unlock, email us and mention which Apple ID region you purchased in.</p>
+
+  <p><strong>How do I cancel my subscription?</strong><br>
+  In iOS Settings, tap your name, then Subscriptions, then Redact, then Cancel Subscription. We
+  cannot cancel it for you — only Apple can. Cancelling stops future renewals; you keep Pro until the
+  current period ends.</p>
+
+  <p><strong>Can I get a refund?</strong><br>
+  Refunds are handled entirely by Apple at
+  <a href="https://reportaproblem.apple.com" rel="noopener">reportaproblem.apple.com</a>. We are not
+  able to issue them directly.</p>
+
+  <p><strong>I deleted a document by accident.</strong><br>
+  It is gone. Documents live only on your device and we hold no copy, which is also why nobody else
+  can read them.</p>
+
+  <p><strong>A page had a black box on it before I opened it in Redact.</strong><br>
+  Redact will warn you about that at export. Boxes drawn by other apps often sit on top of readable
+  text, so we offer to make them permanent. If you decline, that page is exported exactly as it
+  arrived — including whatever was recoverable underneath.</p>
+
+  <h2>Reporting a security issue</h2>
+  <p>If you have found a way to recover content from a file Redact exported, please tell us before
+  telling anyone else: <a href="mailto:rsenthil2504@gmail.com">rsenthil2504@gmail.com</a>. That is
+  the most serious class of bug this app can have and it will be treated as such.</p>
+
+  <footer>
+    <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Use</a>
+  </footer>
+</main>
+</body>
+</html>
