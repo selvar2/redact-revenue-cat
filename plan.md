@@ -19,8 +19,8 @@ RevenueCat, before the Shipaton 2026 deadline.
 | 1 | Registration complete | ✅ | — |
 | 2 | RevenueCat project created | ✅ | Project created, Test Store wired, 2026-08-17 |
 | 3 | First test purchase | ✅ | Test Store purchase completed in the simulator, 2026-08-17 |
-| 4 | First Store API call | ⬜ | **Unblocked.** Needs app record + IAP products + `.p8` |
-| 5 | First real purchase | ⬜ | App live; buy it yourself |
+| 4 | First Store API call | ✅ | Real `appl_` key live; StoreKit verified in device log, 2026-08-17 |
+| 5 | First real purchase | ⬜ | Blocked on IAP products, then app live; buy it yourself |
 
 Apple's financial paperwork — the one item that could have cost weeks — was completed on 2026-08-14.
 The remaining external risks are App Review latency and the three unpublished legal URLs
@@ -45,7 +45,7 @@ Not the Grand Prize; that goes to teams with existing distribution. Three are wi
 | **2** | Scan → Editor → Export loop | A document goes photo → redacted export, end to end | ✅ complete — observed in the simulator, artifact inspected at pixel level |
 | **3** | RevenueCat SDK + paywall | Test Store purchase flips the entitlement; **M3** | ✅ complete — purchase observed in the simulator, entitlement flipped, Export switched to Pro copy |
 | **4** | App Store Connect record, IAP products, real key | RevenueCat shows a Store API call; **M4** | ◀ next |
-| **5** | Polish, accessibility, final audit, TestFlight, submit | `asc validate` zero blockers; submitted by 09-05 | ⬜ |
+| **5** | Polish, accessibility, final audit, TestFlight, submit | `asc validate` zero blockers; submitted by 09-05 | ◀ next |
 | **6** | Live | Own purchase completes; **M5**; Devpost writeup + demo video | ⬜ |
 
 ### Every phase closes the same way — no exceptions

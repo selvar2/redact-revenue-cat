@@ -27,3 +27,20 @@ resolves is worse than a right URL that does not yet.
 
 **Action for the human, before the F13 milestone:** publish the three pages, then
 `curl -sI <url>` each one and confirm `200` before submitting.
+
+
+---
+
+## RESOLVED — 2026-08-17
+
+Published on the `gh-pages` branch of `selvar2/redact-revenue-cat`, served from
+`https://selvar2.github.io/redact-revenue-cat/`. All three verified returning **200**
+with `curl -o /dev/null -w '%{http_code}'` against the exact URLs `LegalLinks.swift` opens.
+
+Two things were wrong, not one:
+1. The pages did not exist.
+2. `LegalLinks` pointed at `senthilnathanraja.github.io` — **an account that does not exist**.
+   The real GitHub username is `selvar2`. Those URLs could never have resolved.
+
+Served from `gh-pages` rather than `/docs` deliberately: `docs/` is the memory vault, and
+serving it would have published the whole project's internal notes as a website.

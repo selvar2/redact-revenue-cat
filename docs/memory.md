@@ -1,7 +1,7 @@
 ---
 id: memory-index
 date: 2026-08-17
-phase: 3
+phase: 4
 tags: [index, state]
 status: living
 ---
@@ -43,6 +43,7 @@ Full write-ups in three depths:
 Phase 1 — [[phase-1-technical]] · [[phase-1-non-technical]] · [[phase-1-guide-for-kids]]
 Phase 2 — [[phase-2-technical]] · [[phase-2-non-technical]] · [[phase-2-guide-for-kids]]
 Phase 3 — [[phase-3-technical]] · [[phase-3-non-technical]] · [[phase-3-guide-for-kids]]
+Phase 4 — [[phase-4-technical]] · [[phase-4-non-technical]] · [[phase-4-guide-for-kids]]
 
 | Feature | Status | Note |
 |---|---|---|
@@ -58,29 +59,59 @@ Phase 3 — [[phase-3-technical]] · [[phase-3-non-technical]] · [[phase-3-guid
 | F11 onboarding + sample | **`verified`** | Reviewer path: 3 taps, ~20s, no camera or account |
 
 **Immediate next actions:**
-1. **Human, blocking:** publish the three legal pages and `curl -sI` a 200 on each
-   ([[legal-urls-not-published]]). Terms and Privacy are now *tappable links on the paywall*, so a
-   404 is both an App Store Connect metadata failure and a reviewer-facing rejection.
+1. **Create the two subscription products in App Store Connect.** Group "Redact Pro" (`22315273`)
+   exists but is **empty** — no sandbox or real purchase can succeed until `redact_pro_monthly` and
+   `redact_pro_annual` exist there and are imported into RevenueCat. This is the single blocker
+   between here and M5.
 2. Independent verifier pass over **F02–F10** — the Phase 3 fixer applied nine fixes and cannot
    verify itself (`CLAUDE.md` rule 7).
-3. Phase 4 — App Store Connect record, the three IAP products, and swapping the `test_` key for the
-   `appl_` one (**M4**).
+3. **Human:** rotate `AuthKey_CDCMHRBW3C` — Admin-scoped, pasted into a chat transcript, and needed
+   for Phase 5 TestFlight uploads anyway. Regenerate as **App Manager** ([[DEC-007-apple-key-types]]).
+4. Design the **remote paywall** in RevenueCat's editor — the native fallback renders today; the
+   remote one is the HAMM-award capability.
+5. Phase 5 — TestFlight, then App Store submission by **2026-09-05**.
 
 | Milestone | State |
 |---|---|
 | M1 Registration | ✅ complete |
 | M2 RevenueCat project | ✅ complete — project created, Test Store wired, 2026-08-17 |
 | M3 Test purchase | ✅ **complete — observed end to end in the simulator, 2026-08-17** |
-| M4 Store API call | ⬜ next — unblocked; Apple paperwork done |
-| M5 Real purchase | ⬜ |
+| M4 Store API call | ✅ **complete — real `appl_` key live, StoreKit verified in device log, 2026-08-17** |
+| M5 Real purchase | ⬜ next — needs IAP products, then app live on the App Store |
 
 Apple monetization setup finished 2026-08-14 in a single day: Paid Apps Agreement Active, bank
-account Active, W-8BEN Active. Remaining risks are App Review latency and the unpublished legal URLs.
+account Active, W-8BEN Active. Legal URLs are now **published and returning 200**. Remaining risk is App Review latency alone.
 
 **Done so far:** harness (`verify.sh`, `init.sh`, `feature_list.json`), memory vault + BM25 retrieval
 index, governance docs, Xcode scaffold (F01), all of Phase 1's Core + DesignSystem modules, all of
 Phase 2's `Features/` tree plus app-level wiring, and Phase 3's `Core/Entitlements/**` +
 `Features/Paywall/**` + the gating in Scan / Export / Library.
+
+## Apple / RevenueCat identifiers (live)
+
+Everything a cold session needs; none of it secret. Secrets live in the keychain and `~/Downloads`,
+never here — see [[DEC-007-apple-key-types]].
+
+```
+Apple ID (Account Holder)   SCRIPTKIDAPPLE7@GMAIL.COM   (SENTHILNATHAN RAJA)
+Team ID                     8837BPRM4M
+Bundle ID                   com.senthilnathanraja.redact
+App Store Connect App ID    6802355309   "Redact: Hide Personal Info"   SKU REDACT-IOS-2026
+Subscription group          "Redact Pro"  22315273        ← EMPTY, products not yet created
+In-App Purchase Key ID      BU27GRYDV3
+Issuer ID                   34fe7ae7-f498-44e2-82ae-a34c1e95e7d7
+RevenueCat project          51ce66cf
+RevenueCat App Store app    app8a75e71942  "Redact (App Store)"
+Public SDK key (safe)       appl_DuknWVjObDvejcuDZURluQLtfDS
+Entitlement / Offering      pro / default  ($rc_monthly, $rc_annual)
+Product identifiers         redact_pro_monthly, redact_pro_annual
+GitHub                      github.com/selvar2/redact-revenue-cat  (public)
+Legal pages (200 OK)        selvar2.github.io/redact-revenue-cat/{privacy,terms,support}.html
+```
+
+⚠️ **Five other Admins** hold All-Apps access to the developer account. Each can see this app,
+upload builds, change pricing and read financial reports. Flagged to the human 2026-08-17; removing
+access is not an agent's decision.
 
 ## Key decisions
 
@@ -91,6 +122,8 @@ Phase 2's `Features/` tree plus app-level wiring, and Phase 3's `Core/Entitlemen
 | [[DEC-003-ios-target]] | iOS 17 floor, iOS 26 `FoundationModels` as gated enhancement | Real on-device LLM story without abandoning the install base |
 | [[DEC-004-no-network]] | Zero network calls except the RevenueCat SDK | Enables a truthful "No Data Collected" App Privacy answer |
 | [[DEC-005-bounded-loop]] | One verifier pass + one fixer pass per phase, 7 total | Unbounded verify→fix cycles burn budget without converging |
+| [[DEC-006-support-email-deferred]] | Publish the personal support address now, alias later | Apple requires a reachable contact; inbox hygiene is not critical-path |
+| [[DEC-007-apple-key-types]] | Generate a new In-App Purchase key rather than reuse the ASC API key | Wrong key type fails **silently** — customers pay and get nothing |
 
 ## Architecture at a glance
 
