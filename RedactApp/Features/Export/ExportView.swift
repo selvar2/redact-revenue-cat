@@ -15,9 +15,22 @@ import UIKit
 struct ExportView: View {
 
     let session: RedactionSession
-    /// What the user is entitled to. Phase 3 supplies this from the entitlement layer; until then
-    /// the honest default is the free tier, which is also the more constrained path to test.
-    var tier: ExportPipeline.Tier = .free
+
+    /// Forces a tier instead of reading the entitlement. Previews and tests only — the app's own
+    /// navigation constructs this view with the session alone, so the real answer always comes from
+    /// ``ProAccess``.
+    var tierOverride: ExportPipeline.Tier? = nil
+
+    init(session: RedactionSession, tierOverride: ExportPipeline.Tier? = nil) {
+        self.session = session
+        self.tierOverride = tierOverride
+    }
+
+    /// The live entitlement. See ``ProAccess``: `nil` store resolves to the free tier.
+    private var proAccess = ProAccess()
+
+    /// What the user may actually export as.
+    private var tier: ExportPipeline.Tier { tierOverride ?? proAccess.exportTier }
 
     @Environment(AppCoordinator.self) private var coordinator
     @Environment(\.accessibleAnimation) private var accessibleAnimation
@@ -55,6 +68,15 @@ struct ExportView: View {
         .navigationTitle(Text("Export", comment: "Navigation title of the export screen"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await prepare() }
+        // The entitlement can change while this screen is open — the paywall is a sheet over it, so
+        // a purchase lands here. Re-coerce the selection so the picker can never be left showing a
+        // format the current tier would refuse at export time.
+        .onChange(of: tier) { _, _ in
+            let available = ExportPipeline.availableFormats(for: session.source, tier: tier)
+            if !available.contains(format), let first = available.first {
+                format = first
+            }
+        }
         .sheet(isPresented: $showingMarkupSheet) {
             InsecureMarkupSheet(report: exportedMarkupReport, pages: session.pages) { chosen in
                 pagesToFlatten = chosen
@@ -69,7 +91,7 @@ struct ExportView: View {
         ) { failure in
             if failure.offersPro {
                 Button(String(localized: "See Redact Pro", comment: "Alert button opening the subscription screen")) {
-                    coordinator.presentPaywall()
+                    coordinator.presentPaywall(failure.paywallContext)
                 }
                 Button(String(localized: "Not now", comment: "Alert button dismissing the Pro suggestion"), role: .cancel) {}
             } else {
@@ -131,12 +153,21 @@ struct ExportView: View {
                                            comment: "VoiceOver label for the redaction count pill")
             )
             Pill(
-                String(localized: "\(session.pages.count) pages", comment: "Pill: page count of the document"),
+                pageCountLabel,
                 systemImage: "doc.on.doc",
                 style: .neutral
             )
             Spacer()
         }
+    }
+
+    /// Inflected so a one-page document reads "1 page", not "1 pages". Automatic grammar agreement
+    /// does the same job for every localisation, which a hand-written `if count == 1` does not.
+    private var pageCountLabel: String {
+        String(AttributedString(
+            localized: "^[\(session.pages.count) pages](inflect: true)",
+            comment: "Pill: page count of the document"
+        ).characters)
     }
 
     // MARK: - Format
@@ -145,9 +176,10 @@ struct ExportView: View {
         VStack(alignment: .leading, spacing: Token.Space.sm) {
             SectionHeader(String(localized: "Format", comment: "Heading above the export format picker")) { EmptyView() }
 
-            Picker(selection: $format) {
-                ForEach(ExportPipeline.availableFormats(for: session.source, tier: tier)) { option in
-                    Text(option.displayName).tag(option)
+            Picker(selection: formatSelection) {
+                ForEach(ExportPipeline.offerableFormats(for: session.source)) { option in
+                    Text(isLocked(option) ? option.lockedDisplayName : option.displayName)
+                        .tag(option)
                 }
             } label: {
                 Text("Export format", comment: "Accessibility label of the export format picker")
@@ -159,8 +191,80 @@ struct ExportView: View {
                 .typeStyle(Typography.callout)
                 .foregroundStyle(Token.Text.muted)
                 .frame(maxWidth: Token.Layout.proseWidth, alignment: .leading)
+
+            ForEach(lockedFormats) { locked in
+                lockedFormatNotice(locked)
+            }
         }
         .glassCard()
+    }
+
+    private var lockedFormats: [ExportPipeline.Format] {
+        ExportPipeline.lockedFormats(for: session.source, tier: tier)
+    }
+
+    private func isLocked(_ format: ExportPipeline.Format) -> Bool {
+        lockedFormats.contains(format)
+    }
+
+    /// The picker's selection, with the Pro segments intercepted.
+    ///
+    /// A locked segment is shown and tappable on purpose. Hiding it means the user never learns the
+    /// app can do this; disabling it means they learn only that something is off-limits, with no
+    /// reason and nowhere to go. Tapping it explains what the format is and opens the subscription
+    /// screen, and `format` is left alone so the segmented control snaps back to what will actually
+    /// be exported — the screen never claims a state the export cannot deliver.
+    private var formatSelection: Binding<ExportPipeline.Format> {
+        Binding(
+            get: { format },
+            set: { chosen in
+                guard !isLocked(chosen) else {
+                    coordinator.presentPaywall(.pdfExport)
+                    return
+                }
+                format = chosen
+            }
+        )
+    }
+
+    /// States, in the open, exactly what the locked format is and what it costs to have it.
+    private func lockedFormatNotice(_ locked: ExportPipeline.Format) -> some View {
+        VStack(alignment: .leading, spacing: Token.Space.xs) {
+            Text(lockedFormatExplanation(locked))
+                .typeStyle(Typography.callout)
+                .foregroundStyle(Token.Text.muted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            SecondaryButton(
+                String(localized: "Unlock \(locked.displayName) export",
+                       comment: "Button opening the subscription screen from a locked export format; parameter is the format name"),
+                systemImage: "sparkles",
+                prominence: .plain
+            ) {
+                coordinator.presentPaywall(.pdfExport)
+            }
+            .accessibilityHint(Text("Opens the Redact Pro subscription screen",
+                                    comment: "VoiceOver hint on the button that unlocks a Pro export format"))
+        }
+        .frame(maxWidth: Token.Layout.proseWidth, alignment: .leading)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func lockedFormatExplanation(_ locked: ExportPipeline.Format) -> String {
+        switch locked {
+        case .pdf:
+            return String(
+                localized: "\(locked.displayName) export saves all \(session.pages.count) pages as one document and is part of Redact Pro. The free tier saves one page at a time as a picture, redacted just as thoroughly.",
+                comment: "Explains why the PDF export option is unavailable on the free tier"
+            )
+        case .png:
+            // Unreachable today — PNG is on every tier. Written as a real sentence rather than a
+            // fatalError so a future tier change degrades to an honest string, not a crash.
+            return String(
+                localized: "\(locked.displayName) export is part of Redact Pro.",
+                comment: "Explains that an export format is unavailable on the free tier"
+            )
+        }
     }
 
     private var formatExplanation: String {
@@ -189,16 +293,31 @@ struct ExportView: View {
                      comment: "Plan summary shown to a Pro subscriber on the export screen")
                     .typeStyle(Typography.callout)
                     .foregroundStyle(Token.Text.muted)
-            } else {
+            } else if usage.remainingFreeDocuments > 0 {
                 Text("Free covers one page at a time, saved as a picture — \(usage.remainingFreeDocuments) of \(UsageTracker.freeMonthlyAllowance) left this month. Pro saves every page as one document with no monthly limit.",
                      comment: "Plan summary shown to a free user on the export screen")
                     .typeStyle(Typography.callout)
                     .foregroundStyle(Token.Text.muted)
+            } else {
+                // Said here, before the Export button is pressed, and with the date attached. The
+                // limit is not a dead end — it is a wait with a known end, or a purchase.
+                Text("You have used all \(UsageTracker.freeMonthlyAllowance) free documents this month. They come back on \(usage.nextResetDate.formatted(date: .abbreviated, time: .omitted)). Pro removes the monthly limit.",
+                     comment: "Plan summary shown to a free user whose monthly quota is spent; parameter is the reset date")
+                    .typeStyle(Typography.callout)
+                    .foregroundStyle(Token.Text.muted)
+            }
 
+            // Suppressed when the format card is already showing an "Unlock PDF export" button —
+            // two buttons to the same screen, a thumb's width apart, is nagging.
+            if !tier.isPro && lockedFormats.isEmpty {
                 SecondaryButton(String(localized: "See what Pro includes", comment: "Button opening the subscription screen from export"),
                                 prominence: .plain) {
-                    coordinator.presentPaywall()
+                    // The wall this user is actually at: the quota, once it is spent; otherwise
+                    // they are browsing, and quota copy would be simply untrue.
+                    coordinator.presentPaywall(usage.remainingFreeDocuments > 0 ? .general : .monthlyLimit)
                 }
+                .accessibilityHint(Text("Opens the Redact Pro subscription screen",
+                                        comment: "VoiceOver hint on the button that opens the subscription screen"))
             }
         }
         .frame(maxWidth: Token.Layout.proseWidth, alignment: .leading)
@@ -420,6 +539,9 @@ private struct ExportFailure: Identifiable {
     let message: String
     let offersPro: Bool
 
+    /// Which wall the user met, so the subscription screen opens saying the right thing.
+    let paywallContext: PaywallContext
+
     init(error: any Error) {
         let localized = error as? any LocalizedError
         title = localized?.errorDescription
@@ -429,17 +551,32 @@ private struct ExportFailure: Identifiable {
                       comment: "Generic export failure message")
 
         switch error {
-        case ExportPipeline.ExportError.freeAllowanceSpent, ExportPipeline.ExportError.formatRequiresPro:
+        case ExportPipeline.ExportError.freeAllowanceSpent:
             offersPro = true
+            paywallContext = .monthlyLimit
+        case ExportPipeline.ExportError.formatRequiresPro:
+            offersPro = true
+            paywallContext = .pdfExport
         default:
             offersPro = false
+            paywallContext = .general
         }
     }
 }
 
-#Preview("Export") {
+#Preview("Export — free") {
     NavigationStack {
-        ExportView(session: RedactionSession(source: .image(Data()), title: "Bank statement"))
+        ExportView(session: RedactionSession(source: .image(Data()), title: "Bank statement"),
+                   tierOverride: .free)
+            .environment(AppCoordinator())
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Export — Pro") {
+    NavigationStack {
+        ExportView(session: RedactionSession(source: .image(Data()), title: "Bank statement"),
+                   tierOverride: .pro)
             .environment(AppCoordinator())
     }
     .preferredColorScheme(.dark)

@@ -10,9 +10,17 @@ struct DocumentDetailView: View {
 
     let documentID: UUID
 
+    init(documentID: UUID) {
+        self.documentID = documentID
+    }
+
     @Environment(AppCoordinator.self) private var coordinator
     @Environment(AppEnvironment.self) private var appEnvironment
-    @Environment(\.libraryProAccess) private var isPro
+    /// The audit log is Pro. Read from the entitlement layer rather than from an environment flag
+    /// somebody has to remember to inject — see ``ProAccess`` and
+    /// `docs/memory/gotchas/library-pro-access-seam.md`, which this replaces.
+    private var proAccess = ProAccess()
+    private var isPro: Bool { proAccess.isPro }
 
     @State private var detail: DocumentDetail?
     @State private var pageIndex = 0
@@ -210,7 +218,11 @@ struct DocumentDetailView: View {
 
             if isPro {
                 if detail.auditEntries.isEmpty {
-                    Text("No audit records were written for this document.")
+                    // Almost always a document redacted before subscribing: the records are written
+                    // at export time and there is nothing to reconstruct them from afterwards,
+                    // because the removed information no longer exists anywhere. Saying so beats an
+                    // empty list that reads like the feature is broken.
+                    Text("No log was kept for this document. Records are written while a document is being redacted, and this one was redacted before Pro was active.")
                         .typeStyle(Typography.callout)
                         .foregroundStyle(Token.Text.muted)
                         .fixedSize(horizontal: false, vertical: true)
@@ -273,8 +285,14 @@ struct DocumentDetailView: View {
                 .foregroundStyle(Token.Text.faint)
                 .fixedSize(horizontal: false, vertical: true)
 
+            // The honest limit, stated before the button rather than discovered after paying.
+            Text("Records are written as a document is redacted, so the log starts with the next document you redact — it cannot be filled in for this one.")
+                .typeStyle(Typography.caption)
+                .foregroundStyle(Token.Text.faint)
+                .fixedSize(horizontal: false, vertical: true)
+
             SecondaryButton(String(localized: "See what Pro includes"), systemImage: "sparkles") {
-                coordinator.presentPaywall()
+                coordinator.presentPaywall(.auditLog)
             }
             .accessibilityHint("Opens the Redact Pro subscription screen")
         }
@@ -399,7 +417,8 @@ struct DocumentDetail {
 
 // MARK: - Preview
 
-#Preview("Document detail") {
+@MainActor
+private func documentDetailPreviewFixture() -> (AppEnvironment, UUID) {
     let appEnvironment = AppEnvironment()
     let document = RedactedDocument(
         title: "Salary slip",
@@ -408,9 +427,14 @@ struct DocumentDetail {
         redactionCount: 3
     )
     try? appEnvironment.store.insert(document)
+    return (appEnvironment, document.id)
+}
 
-    return NavigationStack {
-        DocumentDetailView(documentID: document.id)
+#Preview("Document detail") {
+    let (appEnvironment, documentID) = documentDetailPreviewFixture()
+
+    NavigationStack {
+        DocumentDetailView(documentID: documentID)
     }
     .environment(appEnvironment)
     .environment(AppCoordinator())

@@ -42,7 +42,11 @@ struct LibraryView: View {
         .accessibleAnimation(Motion.standard, value: model.pendingDeletion)
         .ambientBackground(.subdued)
         .navigationTitle(AppRoute.library.accessibilityTitle)
-        .navigationBarTitleDisplayMode(.large)
+        // Inline, not large. The home screen hides its own navigation bar, and a screen pushed
+        // from a hidden bar draws its large title in the same band as the search field's drawer —
+        // the title and the "Search by name or date" placeholder were rendering on top of each
+        // other, observed in the simulator. Inline gives the search field the row to itself.
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
         .environment(\.editMode, $editMode)
         .searchable(

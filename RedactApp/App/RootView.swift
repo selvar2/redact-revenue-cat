@@ -13,6 +13,11 @@ struct RootView: View {
     @State private var onboarding = OnboardingState.shared
     @State private var appEnvironment = AppEnvironment()
 
+    /// The one entitlement store in the app. Injected into the environment below, where
+    /// `Features/Library/ProAccess.swift` reads it as an optional — nothing else in the feature tree
+    /// names RevenueCat.
+    @State private var entitlements = EntitlementStore()
+
     /// Non-nil while the sample document is being rendered, so the button can show progress instead
     /// of appearing to do nothing for the ~100ms of render plus OCR startup.
     @State private var isPreparingSample = false
@@ -32,6 +37,7 @@ struct RootView: View {
         .tint(Token.Accent.violetLight)
         .environment(coordinator)
         .environment(appEnvironment)
+        .environment(entitlements)
         .modelContainer(appEnvironment.container)
         .fullScreenCover(isPresented: $showingOnboarding) {
             OnboardingView(
@@ -66,6 +72,13 @@ struct RootView: View {
         }
         .task {
             appEnvironment.prepareStorage()
+
+            // Adopts the SDK's cached entitlement, then listens for renewals, expiries and
+            // purchases made on another device. Started after the first frame for the same reason
+            // storage is: nothing on the home screen depends on it, and a returning Pro user is
+            // already Pro from the cache before any network answer arrives. `start()` is
+            // idempotent, so a view rebuild cannot open a second stream.
+            entitlements.start()
         }
     }
 

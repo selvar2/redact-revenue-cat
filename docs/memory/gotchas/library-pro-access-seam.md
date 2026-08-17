@@ -3,10 +3,18 @@ id: library-pro-access-seam
 date: 2026-08-17
 phase: 2
 tags: [gotcha, library, entitlements, paywall, scope]
-status: open
+status: superseded
 ---
 
 # The library's Pro gate is a placeholder seam, not a real entitlement check
+
+> **Superseded 2026-08-17 by the `pro-gating` agent (Phase 3).**
+> `LibraryProAccess.swift` and the `\.libraryProAccess` environment key are deleted.
+> `DocumentDetailView` now reads the entitlement through
+> `RedactApp/Features/Library/ProAccess.swift`. The remaining half of the problem — nobody
+> installing `EntitlementStore` into the environment at the root — moved to
+> [[pro-gating-cross-lane-dependencies]]. Everything below is kept as the record of why the
+> seam existed.
 
 ## What
 

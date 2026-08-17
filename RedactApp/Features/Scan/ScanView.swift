@@ -23,6 +23,21 @@ struct ScanView: View {
     /// Injected so a preview or test can pin the quota without touching `UserDefaults.standard`.
     private let usage: UsageTracker
 
+    /// The subscription half of the gate. See ``ProAccess``.
+    private var proAccess = ProAccess()
+
+    /// Forces a tier instead of reading the entitlement. Previews and tests only.
+    private let isProOverride: Bool?
+
+    private var isPro: Bool { isProOverride ?? proAccess.isPro }
+
+    /// The whole gate, asked as one question.
+    ///
+    /// Pro **or** quota remaining. Two separate checks in two places is how a subscriber ends up
+    /// blocked by a counter that should not apply to them, and it is the kind of bug that surfaces
+    /// as a refund request rather than a crash report.
+    private var canStartDocument: Bool { isPro || usage.canProcessDocument() }
+
     @State private var stage: Stage = .idle
     @State private var session: RedactionSession?
     @State private var work: Task<Void, Never>?
@@ -33,8 +48,9 @@ struct ScanView: View {
     @State private var isPresentingFileImporter = false
     @State private var photoSelection: PhotosPickerItem?
 
-    init(usage: UsageTracker = .shared) {
+    init(usage: UsageTracker = .shared, isProOverride: Bool? = nil) {
         self.usage = usage
+        self.isProOverride = isProOverride
     }
 
     // MARK: - Body
@@ -100,6 +116,7 @@ struct ScanView: View {
                 subtitle: "Redact reads it on this device, finds names, numbers and IDs, and removes them for good."
             )
             quotaPill
+            if !canStartDocument { quotaSpentCard }
         }
     }
 
@@ -107,25 +124,66 @@ struct ScanView: View {
     ///
     /// Shown before the user commits rather than after, because discovering the limit *at* export —
     /// having already picked, waited for OCR and reviewed detections — is where people uninstall.
-    /// Phase 3 hides this for subscribers; it is a usage counter and knows nothing about purchases.
+    /// A subscriber sees the fact that there is no counter, not a counter that does not apply.
     @ViewBuilder
     private var quotaPill: some View {
-        let remaining = usage.remainingFreeDocuments
-        if remaining > 0 {
+        if isPro {
             Pill(
-                "\(remaining) of \(UsageTracker.freeMonthlyAllowance) free this month",
-                systemImage: "doc.badge.clock",
-                style: .accent,
-                accessibilityLabel: "\(remaining) of \(UsageTracker.freeMonthlyAllowance) free documents remaining this month"
+                "Pro · no monthly limit",
+                systemImage: "infinity",
+                style: .success,
+                accessibilityLabel: "Redact Pro is active. There is no monthly document limit."
             )
         } else {
-            Pill(
-                "Free documents used",
-                systemImage: "exclamationmark.circle",
-                style: .warning,
-                accessibilityLabel: "You have used all \(UsageTracker.freeMonthlyAllowance) free documents this month. Choosing a document will show upgrade options."
-            )
+            let remaining = usage.remainingFreeDocuments
+            if remaining > 0 {
+                Pill(
+                    "\(remaining) of \(UsageTracker.freeMonthlyAllowance) free documents left this month",
+                    systemImage: "doc.badge.clock",
+                    style: .accent,
+                    accessibilityLabel: "\(remaining) of \(UsageTracker.freeMonthlyAllowance) free documents left this month"
+                )
+            } else {
+                Pill(
+                    "Free documents used",
+                    systemImage: "exclamationmark.circle",
+                    style: .warning,
+                    accessibilityLabel: "You have used all \(UsageTracker.freeMonthlyAllowance) free documents this month."
+                )
+            }
         }
+    }
+
+    /// What happens next, spelled out *before* the user taps a route that cannot proceed.
+    ///
+    /// The three import rows stay enabled and still respond — tapping one opens the subscription
+    /// screen rather than doing nothing. This card is why that is not a surprise: it names the
+    /// limit, gives the date it lifts, and says that everything already redacted stays available.
+    private var quotaSpentCard: some View {
+        VStack(alignment: .leading, spacing: Token.Space.sm) {
+            Text("You have used all \(UsageTracker.freeMonthlyAllowance) free documents this month. Another \(UsageTracker.freeMonthlyAllowance) arrive on \(usage.nextResetDate.formatted(date: .abbreviated, time: .omitted)).")
+                .typeStyle(Typography.callout)
+                .foregroundStyle(Token.Text.muted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Everything you have already redacted stays in your library, and you can share it as often as you like.")
+                .typeStyle(Typography.caption)
+                .foregroundStyle(Token.Text.faint)
+                .fixedSize(horizontal: false, vertical: true)
+
+            SecondaryButton(String(localized: "See what Pro includes",
+                                   comment: "Button opening the subscription screen from the scan screen"),
+                            systemImage: "sparkles") {
+                // This card is only shown once the month's documents are spent, so the quota wall
+                // is the one the user is actually standing at.
+                coordinator.presentPaywall(.monthlyLimit)
+            }
+            .accessibilityHint(Text("Opens the Redact Pro subscription screen",
+                                    comment: "VoiceOver hint on the button that opens the subscription screen"))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard()
+        .accessibilityElement(children: .contain)
     }
 
     // MARK: - Options
@@ -136,7 +194,8 @@ struct ScanView: View {
                 icon: "doc.viewfinder",
                 title: "Scan with the camera",
                 detail: cameraDetail,
-                isEnabled: DocumentCameraView.isSupported
+                isEnabled: DocumentCameraView.isSupported,
+                actionHint: gateHint
             ) {
                 begin(.camera)
             }
@@ -144,7 +203,8 @@ struct ScanView: View {
             OptionRow(
                 icon: "photo.on.rectangle",
                 title: "Choose a photo",
-                detail: "Pick one photo. Redact never sees the rest of your library."
+                detail: "Pick one photo. Redact never sees the rest of your library.",
+                actionHint: gateHint
             ) {
                 begin(.photo)
             }
@@ -152,11 +212,20 @@ struct ScanView: View {
             OptionRow(
                 icon: "doc.text",
                 title: "Open a PDF",
-                detail: "Multi-page statements, forms and letters from Files or iCloud Drive."
+                detail: "Multi-page statements, forms and letters from Files or iCloud Drive.",
+                actionHint: gateHint
             ) {
                 begin(.pdf)
             }
         }
+    }
+
+    /// `nil` while the gate is open, so each row keeps its own descriptive hint.
+    private var gateHint: String? {
+        canStartDocument
+            ? nil
+            : String(localized: "Your free documents for this month are used. This opens the Redact Pro subscription screen.",
+                     comment: "VoiceOver hint on an import row when the free monthly allowance is spent")
     }
 
     /// The Simulator has no document camera, and neither do some devices. Saying so in the row —
@@ -287,17 +356,24 @@ struct ScanView: View {
 
     private enum Action { case camera, photo, pdf }
 
-    /// The free-tier gate, checked *before* any picker opens.
+    /// The gate — Pro **or** free quota remaining — checked *before* any picker opens.
     ///
     /// Deliberately in front of the work rather than after it: letting someone capture eight pages
     /// and wait through OCR only to be told they are out of quota wastes their time and their
     /// battery, and reads as a bait-and-switch. `UsageTracker` counts documents actually processed;
     /// nothing is consumed here.
+    ///
+    /// The rows are not disabled when the gate is shut. A disabled row that does nothing when
+    /// pressed teaches nothing; this opens the subscription screen, and ``quotaSpentCard`` above has
+    /// already said why. Note what is *not* gated: nothing about the redaction itself changes. A
+    /// free user's document is read, detected and destroyed by exactly the same code as a
+    /// subscriber's. The free tier is limited in volume and in output format, never in how
+    /// thoroughly it protects you.
     private func begin(_ action: Action) {
         failure = nil
 
-        guard usage.canProcessDocument() else {
-            coordinator.presentPaywall()
+        guard canStartDocument else {
+            coordinator.presentPaywall(.monthlyLimit)
             return
         }
 
@@ -457,6 +533,10 @@ private struct OptionRow: View {
     let title: String
     let detail: String
     var isEnabled: Bool = true
+    /// Replaces the VoiceOver hint when tapping the row does something other than what `detail`
+    /// describes — currently only when the free allowance is spent and the row opens the
+    /// subscription screen instead of a picker.
+    var actionHint: String? = nil
     let action: () -> Void
 
     var body: some View {
@@ -490,7 +570,7 @@ private struct OptionRow: View {
         .disabled(!isEnabled)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
-        .accessibilityHint(detail)
+        .accessibilityHint(actionHint ?? detail)
         .accessibilityAddTraits(.isButton)
     }
 }
@@ -508,8 +588,14 @@ private struct OptionRowStyle: ButtonStyle {
     }
 }
 
-#Preview("Scan") {
-    ScanView()
+#Preview("Scan — free") {
+    ScanView(isProOverride: false)
+        .environment(AppCoordinator())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Scan — Pro") {
+    ScanView(isProOverride: true)
         .environment(AppCoordinator())
         .preferredColorScheme(.dark)
 }

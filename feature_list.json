@@ -105,8 +105,9 @@
       "name": "RevenueCat paywall and entitlements",
       "phase": 3,
       "owner": "feature-paywall",
-      "status": "not_started",
-      "acceptance": "Test Store purchase completes and flips entitlement; Restore Purchases button present; EULA and Privacy links visible; price, period and auto-renewal stated"
+      "status": "built",
+      "acceptance": "Test Store purchase completes and flips entitlement; Restore Purchases button present; EULA and Privacy links visible; price, period and auto-renewal stated",
+      "notes": "Fixer 2026-08-17 (phase 3): the verifier's blockers are applied. RouteDestination now resolves `case .paywall(let context)` to RedactPaywallView(context:entitlements:); FreeTierNoticeView.swift deleted and xcodegen re-run; AppRoute.paywall carries a PaywallContext and presentPaywall(_:) passes it, so all six walls (Scan quota x2, Export PDF-format x2, Export plan card, Export failure alert, DocumentDetail audit log) open with their own copy and placement. PaywallStore no longer purchases, restores or keeps its own isPro: it delegates to the injected EntitlementStore (the one ProAccess reads), and PaywallExperiment.entitlementIdentifier forwards to RevenueCatConfig.proEntitlementIdentifier \u2014 one state machine, one 'pro' literal. Driven in the iOS 26.5 simulator: sample -> Review and export -> 'See what Pro includes' shows Yearly $29.99 (Save 50%, \u2248$2.50/mo) and Monthly $4.99, Restore Purchases, the auto-renewal sentence, Terms of Use and Privacy Policy; 'Test valid purchase' completed, the sheet dismissed itself and the Export screen switched to Pro copy \u2014 M3 (test purchase) observed end to end. Also fixed: the '1 pages' pill is now inflected ('1 page'), and the Library title no longer overlaps its search field. STILL OPEN, human-only: the three legal URLs at selvar2.github.io are unpublished (docs/memory/gotchas/legal-urls-not-published.md) \u2014 they must return 200 before F13. Verifier must re-check; fixer does not write 'verified'."
     },
     {
       "id": "F11",
@@ -153,7 +154,7 @@
   "milestones": {
     "M1_registration": "complete",
     "M2_revenuecat_project": "complete",
-    "M3_test_purchase": "not_started",
+    "M3_test_purchase": "complete",
     "M4_store_api_call": "not_started",
     "M5_real_purchase": "not_started"
   }

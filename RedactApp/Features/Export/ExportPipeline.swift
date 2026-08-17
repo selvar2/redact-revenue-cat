@@ -61,16 +61,45 @@ public enum ExportPipeline {
             }
         }
 
+        /// Label used when the current tier cannot pick this format.
+        ///
+        /// The word "Pro" sits in the text rather than in a lock glyph: a segmented control cannot
+        /// carry a per-segment accessibility label, so an icon-only marker would be invisible to
+        /// VoiceOver, and "locked" would be announced as nothing at all.
+        public var lockedDisplayName: String {
+            String(localized: "\(displayName) (Pro)",
+                   comment: "Export format option a free user cannot pick; parameter is the format name")
+        }
+
         public var requiresPro: Bool { self == .pdf }
     }
 
-    /// The formats a session can be exported as, given the tier.
+    /// Every format that is *meaningful* for this source, ignoring what the user has paid.
+    ///
+    /// This is what the export screen puts on screen, including the options the current tier cannot
+    /// use — a control that silently vanishes teaches the user nothing, and a greyed-out one with no
+    /// reason attached is an App Review complaint waiting to happen. The screen labels the Pro
+    /// entries and routes a tap to the paywall; ``availableFormats(for:tier:)`` is what actually
+    /// decides, and ``run(session:format:tier:…)`` re-checks it so the gate does not live in a view.
     ///
     /// An image source has no PDF option on any tier — wrapping one photo in a PDF is a container
     /// change, not a feature, and offering it as a Pro unlock would be a lie about what Pro buys.
+    /// Ordered simplest-first so the free entry is the leading segment.
+    public static func offerableFormats(for source: SessionSource) -> [Format] {
+        source.isPDF ? [.png, .pdf] : [.png]
+    }
+
+    /// The formats a session can be exported as, given the tier.
     public static func availableFormats(for source: SessionSource, tier: Tier) -> [Format] {
         guard source.isPDF else { return [.png] }
         return tier.isPro ? [.pdf, .png] : [.png]
+    }
+
+    /// Formats this source supports that the tier does not include. Empty for Pro, and empty for a
+    /// photo source on any tier.
+    public static func lockedFormats(for source: SessionSource, tier: Tier) -> [Format] {
+        let available = Set(availableFormats(for: source, tier: tier))
+        return offerableFormats(for: source).filter { !available.contains($0) }
     }
 
     // MARK: - Progress

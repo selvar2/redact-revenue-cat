@@ -21,15 +21,18 @@ public enum AppRoute: Hashable {
     case export(RedactionSession)
     case library
     case documentDetail(id: UUID)
-    /// Phase 3 fills this in. It is declared now so the free-tier limit check in Scan and Export
-    /// has somewhere to send the user from day one, and so adding purchases never has to reshape
-    /// navigation. Nothing in this file knows what a subscription is.
-    case paywall
+    /// The subscription screen, carrying **why** it appeared. The payload is what lets each wall
+    /// state the limit the user actually met — and it is the RevenueCat Placement identifier, so
+    /// the quota wall and the export wall can be served different offerings from the dashboard.
+    /// Nothing in this file knows what a subscription is beyond that.
+    case paywall(PaywallContext)
 
     public static func == (lhs: AppRoute, rhs: AppRoute) -> Bool {
         switch (lhs, rhs) {
-        case (.scan, .scan), (.library, .library), (.paywall, .paywall):
+        case (.scan, .scan), (.library, .library):
             return true
+        case (.paywall(let a), .paywall(let b)):
+            return a == b
         case (.editor(let a), .editor(let b)), (.export(let a), .export(let b)):
             return a === b
         case (.documentDetail(let a), .documentDetail(let b)):
@@ -43,7 +46,9 @@ public enum AppRoute: Hashable {
         switch self {
         case .scan:    hasher.combine(0)
         case .library: hasher.combine(1)
-        case .paywall: hasher.combine(2)
+        case .paywall(let context):
+            hasher.combine(2)
+            hasher.combine(context)
         case .editor(let session):
             hasher.combine(3)
             hasher.combine(ObjectIdentifier(session))
@@ -135,12 +140,13 @@ public final class AppCoordinator {
     /// Every quota check (`UsageTracker` says the free tier is spent) calls this and nothing else,
     /// so Phase 3 changes presentation in one place and no feature has to learn about RevenueCat.
     /// No purchase, entitlement, or SDK type appears in this file by design.
-    public func presentPaywall() {
-        presentedSheet = .paywall
+    /// - Parameter context: the wall the user met. Drives the paywall's copy and its placement.
+    public func presentPaywall(_ context: PaywallContext = .general) {
+        presentedSheet = .paywall(context)
     }
 
     public func dismissPaywall() {
-        guard presentedSheet == .paywall else { return }
+        guard case .paywall = presentedSheet else { return }
         presentedSheet = nil
     }
 }
