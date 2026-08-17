@@ -4,7 +4,13 @@
   "min_ios": "17.0",
   "submission_target": "2026-09-05",
   "shipaton_close": "2026-09-30",
-  "_status_values": ["not_started", "in_progress", "built", "verified", "blocked"],
+  "_status_values": [
+    "not_started",
+    "in_progress",
+    "built",
+    "verified",
+    "blocked"
+  ],
   "_rule": "Builders may write up to 'built'. ONLY the verifier agent writes 'verified'. See AGENTS.md.",
   "features": [
     {
@@ -12,7 +18,7 @@
       "name": "Harness, memory vault, governance docs",
       "phase": 0,
       "owner": "orchestrator",
-      "status": "in_progress",
+      "status": "built",
       "acceptance": "init.sh and verify.sh run clean; memory_index.py builds and answers a query; all six governance docs exist"
     },
     {
@@ -20,7 +26,7 @@
       "name": "Xcode project scaffold",
       "phase": 0,
       "owner": "scaffold",
-      "status": "not_started",
+      "status": "built",
       "acceptance": "SwiftUI app builds for iOS 17 min and launches in the iOS 26.5 simulator showing a real first screen"
     },
     {
@@ -117,7 +123,7 @@
       "phase": 4,
       "owner": "human+asc",
       "status": "not_started",
-      "acceptance": "Real (non-Test-Store) API key in use; RevenueCat shows a Store API call — MILESTONE 4"
+      "acceptance": "Real (non-Test-Store) API key in use; RevenueCat shows a Store API call \u2014 MILESTONE 4"
     },
     {
       "id": "F14",
