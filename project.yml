@@ -22,7 +22,9 @@ settings:
     # rather than by review.
     SWIFT_STRICT_CONCURRENCY: complete
     ENABLE_USER_SCRIPT_SANDBOXING: YES
-    DEVELOPMENT_TEAM: ""
+    # Required for device builds and TestFlight. Not a secret — the Team ID appears
+    # in every provisioning profile and in the App ID prefix.
+    DEVELOPMENT_TEAM: "8837BPRM4M"
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
