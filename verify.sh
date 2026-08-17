@@ -70,6 +70,36 @@ else
   printf "  – skipped (no source yet)\n"
 fi
 
+# ── 4b. Required binary assets ──────────────────────────────────────────────
+# Added after a build was silently rejected by App Store Connect: the asset catalog
+# declared a 1024x1024 icon slot but contained no image. The upload succeeded, the
+# build never appeared, and the only notification was an email. Rule 10 caught
+# placeholder *strings* but never checked that required *assets* exist.
+step "App icon (App Store requirement)"
+ICONSET="RedactApp/Resources/Assets.xcassets/AppIcon.appiconset"
+if [ -d "$ICONSET" ]; then
+  ICON=$(ls "$ICONSET"/*.png 2>/dev/null | head -1)
+  if [ -z "$ICON" ]; then
+    fail "no PNG in AppIcon.appiconset — App Store Connect rejects the build silently"
+    printf "      regenerate: swift tools/make_app_icon.swift %s/AppIcon-1024.png\n" "$ICONSET"
+  else
+    DIMS=$(sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICON" 2>/dev/null)
+    W=$(echo "$DIMS" | awk '/pixelWidth/{print $2}')
+    H=$(echo "$DIMS" | awk '/pixelHeight/{print $2}')
+    A=$(echo "$DIMS" | awk '/hasAlpha/{print $2}')
+    if [ "$W" != "1024" ] || [ "$H" != "1024" ]; then
+      fail "icon is ${W}x${H}; App Store requires exactly 1024x1024"
+    elif [ "$A" = "yes" ]; then
+      # An icon with alpha is rejected just as silently as a missing one.
+      fail "icon has an alpha channel; App Store icons must be fully opaque"
+    else
+      pass "1024x1024, opaque"
+    fi
+  fi
+else
+  printf "  – skipped (no asset catalog yet)\n"
+fi
+
 # ── 5. Build ────────────────────────────────────────────────────────────────
 step "Build"
 if [ -d "$PROJECT" ]; then
