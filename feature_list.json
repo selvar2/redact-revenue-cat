@@ -131,7 +131,7 @@
       "name": "App Store Connect record and IAP products",
       "phase": 4,
       "owner": "human+asc",
-      "status": "not_started",
+      "status": "built",
       "acceptance": "Real (non-Test-Store) API key in use; RevenueCat shows a Store API call \u2014 MILESTONE 4"
     },
     {
@@ -155,7 +155,7 @@
     "M1_registration": "complete",
     "M2_revenuecat_project": "complete",
     "M3_test_purchase": "complete",
-    "M4_store_api_call": "not_started",
+    "M4_store_api_call": "complete",
     "M5_real_purchase": "not_started"
   }
 }

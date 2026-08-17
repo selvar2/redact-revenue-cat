@@ -11,7 +11,7 @@ public enum RevenueCatConfig {
 
     // MARK: - Key
 
-    /// The **public SDK key** for the RevenueCat Test Store.
+    /// The **public SDK key** for the real App Store project.
     ///
     /// Committing this is safe, and deliberately so. A public SDK key is shipped inside every copy
     /// of the binary; anyone can pull it out of an IPA with `strings` in a few seconds, which is
@@ -25,10 +25,15 @@ public enum RevenueCatConfig {
     /// (CLAUDE.md rule 9). If you are about to paste a key that does not begin with `test_` or
     /// `appl_`, stop.
     ///
-    /// **Phase 4 swaps the Test Store for the real App Store project by replacing this one line**
-    /// with the `appl_…` public key from the RevenueCat dashboard. Nothing else in the app changes:
-    /// the entitlement, offering and product identifiers below are already the production ones.
-    public static let apiKey = "test_RWwnOzDVmDsnnYlBWDqFvzQkzwp"
+    /// **Swapped from the Test Store to the real App Store on 2026-08-17 (Phase 4, Milestone 4).**
+    /// It was a one-line change, exactly as this comment promised — nothing else in the app moved,
+    /// because the entitlement, offering and product identifiers below were always the production
+    /// ones. RevenueCat app `app8a75e71942`, bundle `com.senthilnathanraja.redact`.
+    ///
+    /// A Test Store key here would be a **submission blocker**, not merely a bug: the SDK logs
+    /// "Apps submitted with a Test Store API key will be rejected during App Review", and Test Store
+    /// purchases are simulated, bypass StoreKit, and record no revenue.
+    public static let apiKey = "appl_DuknWVjObDvejcuDZURluQLtfDS"
 
     // MARK: - Identifiers
 
