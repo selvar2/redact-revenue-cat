@@ -59,12 +59,12 @@ Phase 3 — RevenueCat SDK and paywall (F10), plus Milestone 3.
 | Milestone | State |
 |---|---|
 | M1 Registration | ✅ complete |
-| M2 RevenueCat project | ✅ complete — project `51ce66cf`, Test Store wired, 2026-08-17 |
+| M2 RevenueCat project | ✅ complete — project created, Test Store wired, 2026-08-17 |
 | M3 Test purchase | ⬜ next |
 | M4 Store API call | ⬜ **unblocked** — Apple paperwork done |
 | M5 Real purchase | ⬜ |
 
-Apple monetization setup finished 2026-08-14 in a single day: Paid Apps Agreement Active, HDFC bank
+Apple monetization setup finished 2026-08-14 in a single day: Paid Apps Agreement Active, bank
 account Active, W-8BEN Active. This was the one item that could have cost weeks. It didn't.
 Remaining risks are App Review latency and the unpublished legal URLs.
 

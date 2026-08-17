@@ -16,15 +16,15 @@ public enum LegalLinks {
     ///
     /// **These pages must be live before submission.** A reachable, correct privacy policy URL is
     /// checked by App Review and by App Store Connect's metadata validation.
-    public static let privacyPolicy = url("https://senthilnathanraja.github.io/redact/privacy")
+    public static let privacyPolicy = url("https://selvar2.github.io/redact-revenue-cat/privacy.html")
 
     /// Terms of Use (EULA). Apple's standard EULA is acceptable, but linking our own keeps the
     /// paywall's two required links symmetrical and under our control.
-    public static let termsOfUse = url("https://senthilnathanraja.github.io/redact/terms")
+    public static let termsOfUse = url("https://selvar2.github.io/redact-revenue-cat/terms.html")
 
     /// Support contact, required by App Store Connect metadata and worth surfacing in-app so a
     /// confused user has somewhere to go that is not a one-star review.
-    public static let support = url("https://senthilnathanraja.github.io/redact/support")
+    public static let support = url("https://selvar2.github.io/redact-revenue-cat/support.html")
 
     /// Force-unwraps a compile-time-constant literal. These strings never come from user input or
     /// from disk, so a failure here is a typo caught on the first launch of the first build, not a

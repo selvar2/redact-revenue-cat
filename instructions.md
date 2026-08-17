@@ -53,7 +53,7 @@ Copy the **public SDK key** (safe to commit) and the **Test Store key** for Phas
 |---|---|---|
 | Shipaton registration (M1) | ✅ | — |
 | Paid Apps Agreement | ✅ Active | 14 Aug 2026 |
-| Bank — HDFC (4702), INR | ✅ Active | 14 Aug 2026 |
+| Bank account (INR payout) | ✅ Active | 14 Aug 2026 |
 | W-8BEN, Article 12 @ 15% | ✅ Active | 14 Aug 2026 |
 | Certificate of Foreign Status | ✅ Active | 14 Aug 2026 |
 

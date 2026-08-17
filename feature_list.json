@@ -45,7 +45,7 @@
       "owner": "detect-engine",
       "status": "built",
       "acceptance": "Detects PAN, Aadhaar, IFSC, card, email, phone, GSTIN, and NL person/place/org names with bounding boxes; unit tests over a fixture corpus pass",
-      "notes": "Verifier 2026-08-17: checksums independently confirmed against published algorithms; false-positive coverage real. Known honest gap: FoundationModelClassifier delegates 100% to HeuristicClassifier on iOS 26 — see docs/memory/gotchas/foundation-models-api-unconfirmed.md. | Verifier 2026-08-17 (phase 2), status REVOKED from verified: driven in the simulator, HeuristicClassifier.subBox (Core/Detection/PIIClassifier.swift:89) interpolates a sub-span box by character COUNT across the Vision line box. With proportional type the projection drifts, and in the bundled sample the exported PNG leaves the leading character of the date of birth and of the IFSC visible, while the person name 'Ananya Mehra' gets no bar at all (its bar lands on the word 'August'). Detection logic is right; the geometry it hands the engine is not. Unit tests pass because they assert monotonicity/containment, never pixel truth against real OCR."
+      "notes": "Verifier 2026-08-17: checksums independently confirmed against published algorithms; false-positive coverage real. Known honest gap: FoundationModelClassifier delegates 100% to HeuristicClassifier on iOS 26 \u2014 see docs/memory/gotchas/foundation-models-api-unconfirmed.md. | Verifier 2026-08-17 (phase 2), status REVOKED from verified: driven in the simulator, HeuristicClassifier.subBox (Core/Detection/PIIClassifier.swift:89) interpolates a sub-span box by character COUNT across the Vision line box. With proportional type the projection drifts, and in the bundled sample the exported PNG leaves the leading character of the date of birth and of the IFSC visible, while the person name 'Ananya Mehra' gets no bar at all (its bar lands on the word 'August'). Detection logic is right; the geometry it hands the engine is not. Unit tests pass because they assert monotonicity/containment, never pixel truth against real OCR."
     },
     {
       "id": "F04",
@@ -89,7 +89,7 @@
       "owner": "feature-export",
       "status": "built",
       "acceptance": "Share sheet export; free tier PNG single page, Pro multi-page PDF; output passes the irreversibility test",
-      "note": "Verifier 2026-08-17: the escalated 'detect and offer' annotation decision is genuinely well built — AnnotationAudit scans every page, gates on page.selection(for:) so it only warns when text actually sits under the mark, records no sample of the hidden text, and InsecureMarkupSheet is jargon-free. AnnotationAuditTests are real (fixture-covers-text control, signature-in-blank-margin false-positive control, unfilled-outline control, and a flatten test that asserts PDFDocument.string no longer yields the secret). PNG export driven end to end in the simulator and it saves, shares and decrements the quota. NOT verified: the Pro multi-page PDF path and the flatten selection were never exercised at runtime, and the exported PNG still leaks characters because of the F03 geometry defect."
+      "note": "Verifier 2026-08-17: the escalated 'detect and offer' annotation decision is genuinely well built \u2014 AnnotationAudit scans every page, gates on page.selection(for:) so it only warns when text actually sits under the mark, records no sample of the hidden text, and InsecureMarkupSheet is jargon-free. AnnotationAuditTests are real (fixture-covers-text control, signature-in-blank-margin false-positive control, unfilled-outline control, and a flatten test that asserts PDFDocument.string no longer yields the secret). PNG export driven end to end in the simulator and it saves, shares and decrements the quota. NOT verified: the Pro multi-page PDF path and the flatten selection were never exercised at runtime, and the exported PNG still leaks characters because of the F03 geometry defect."
     },
     {
       "id": "F09",
@@ -98,7 +98,7 @@
       "owner": "feature-library",
       "status": "built",
       "acceptance": "Lists past documents with thumbnails; search; swipe delete purges files",
-      "note": "LibraryView (List: thumbnails, search by name/date, swipe delete, multi-select), DocumentDetailView (page preview, facts, ShareLink re-share, Pro audit log with a factual free-tier lock), LibraryModel (staged delete + undo snackbar, commits via DocumentStore.delete so FileVault purges files), ThumbnailLoader (ImageIO downsample + NSCache). Syntax-checked only (swiftc -parse). Not built, not verified. | Verifier 2026-08-17: delete path traced and it does purge — LibraryModel.commit -> DocumentStore.delete -> FileVault.delete(relativePaths:), files removed before the record, plus commitPendingDeletionNow() on background/disappear so quitting inside the undo window still purges. Swipe delete is mirrored as an accessibilityAction. Not driven at runtime this pass, so it stays built."
+      "note": "LibraryView (List: thumbnails, search by name/date, swipe delete, multi-select), DocumentDetailView (page preview, facts, ShareLink re-share, Pro audit log with a factual free-tier lock), LibraryModel (staged delete + undo snackbar, commits via DocumentStore.delete so FileVault purges files), ThumbnailLoader (ImageIO downsample + NSCache). Syntax-checked only (swiftc -parse). Not built, not verified. | Verifier 2026-08-17: delete path traced and it does purge \u2014 LibraryModel.commit -> DocumentStore.delete -> FileVault.delete(relativePaths:), files removed before the record, plus commitPendingDeletionNow() on background/disappear so quitting inside the undo window still purges. Swipe delete is mirrored as an accessibilityAction. Not driven at runtime this pass, so it stays built."
     },
     {
       "id": "F10",
@@ -131,7 +131,7 @@
       "phase": 4,
       "owner": "human+asc",
       "status": "not_started",
-      "acceptance": "Real (non-Test-Store) API key in use; RevenueCat shows a Store API call — MILESTONE 4"
+      "acceptance": "Real (non-Test-Store) API key in use; RevenueCat shows a Store API call \u2014 MILESTONE 4"
     },
     {
       "id": "F14",
@@ -156,6 +156,5 @@
     "M3_test_purchase": "not_started",
     "M4_store_api_call": "not_started",
     "M5_real_purchase": "not_started"
-  },
-  "revenuecat_project_id": "51ce66cf"
+  }
 }

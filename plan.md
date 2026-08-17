@@ -17,7 +17,7 @@ RevenueCat, before the Shipaton 2026 deadline.
 | # | Milestone | State | Gate |
 |---|---|---|---|
 | 1 | Registration complete | ✅ | — |
-| 2 | RevenueCat project created | ✅ | Project `51ce66cf`, Test Store wired, 2026-08-17 |
+| 2 | RevenueCat project created | ✅ | Project created, Test Store wired, 2026-08-17 |
 | 3 | First test purchase | ⬜ | Test Store key — no Apple setup needed |
 | 4 | First Store API call | ⬜ | **Unblocked.** Needs app record + IAP products + `.p8` |
 | 5 | First real purchase | ⬜ | App live; buy it yourself |
